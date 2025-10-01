@@ -2,8 +2,6 @@ services:
   app:
     build: .
     container_name: dididcrawler-app
-    ports:
-      - "8080:80"
     volumes:
       - ./storage:/var/www/html/storage
     restart: unless-stopped
