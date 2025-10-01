@@ -2,10 +2,21 @@
 # Runs nginx + php-fpm + queue worker in a single container via supervisord
 
 [phases.setup]
-# Keep default PHP build packs and add Supervisor runtime
-nixPkgs = [
-  "python311Packages.supervisor",
-  "nginx"
+# Ensure required system packages are installed for build/runtime
+aptPkgs = [
+  "nginx",
+  "supervisor",
+  "php-cli",
+  "php-fpm",
+  "php-mysql",
+  "php-bcmath",
+  "php-gd",
+  "php-mbstring",
+  "php-xml",
+  "php-curl",
+  "composer",
+  "nodejs",
+  "npm"
 ]
 
 [phases.build]
@@ -263,7 +274,7 @@ stderr_logfile=/var/log/worker-nginx.log
 "worker-phpfpm.conf" = '''
 [program:worker-phpfpm]
 process_name=%(program_name)s_%(process_num)02d
-command=php-fpm -y /assets/php-fpm.conf -F
+command=/bin/bash -lc 'if command -v php-fpm >/dev/null 2>&1; then exec php-fpm -y /assets/php-fpm.conf -F; else exec $(compgen -c | grep -E "^php-fpm[0-9.]*$" | head -n1) -y /assets/php-fpm.conf -F; fi'
 autostart=true
 autorestart=true
 stdout_logfile=/var/log/worker-phpfpm.log
