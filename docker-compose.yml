@@ -5,21 +5,21 @@ services:
     volumes:
       - ./storage:/var/www/html/storage
     restart: unless-stopped
+    depends_on:
+      - mysql
 
-  # Optional: Local MySQL for testing (comment out if using external DB)
-  # mysql:
-  #   image: mysql:8.0
-  #   container_name: dididcrawler-mysql-local
-  #   restart: unless-stopped
-  #   environment:
-  #     MYSQL_DATABASE: dididcrawler
-  #     MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-  #     MYSQL_ROOT_PASSWORD: ""
-  #   volumes:
-  #     - mysql_data:/var/lib/mysql
-  #   ports:
-  #     - "3306:3306"
-  #   command: --default-authentication-plugin=mysql_native_password
+  mysql:
+    image: mysql:8.0
+    container_name: dididcrawler-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: dididcrawler
+      MYSQL_ROOT_PASSWORD: AlphA2112
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    command: --default-authentication-plugin=mysql_native_password
 
-# volumes:
-#   mysql_data:
+volumes:
+  mysql_data:
