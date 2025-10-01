@@ -1,0 +1,110 @@
+# Production-ready single container for Coolify deployment
+FROM php:8.2-apache
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    default-mysql-client \
+    nodejs \
+    npm \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Get latest Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Enable Apache mod_rewrite
+RUN a2enmod rewrite
+
+# Copy application files
+COPY . /var/www/html
+
+# Set ownership
+RUN chown -R www-data:www-data /var/www/html
+
+# Install PHP dependencies
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+
+# Install Node.js dependencies and build assets
+RUN npm ci && \
+    npm run build && \
+    rm -rf node_modules
+
+# Create storage directories and set permissions
+RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache && \
+    chown -R www-data:www-data storage bootstrap/cache && \
+    chmod -R 775 storage bootstrap/cache
+
+# Apache configuration
+RUN echo '<VirtualHost *:80>\n\
+    DocumentRoot /var/www/html/public\n\
+    <Directory /var/www/html/public>\n\
+        AllowOverride All\n\
+        Require all granted\n\
+    </Directory>\n\
+    ErrorLog ${APACHE_LOG_DIR}/error.log\n\
+    CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
+</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
+
+# Create simple entrypoint
+RUN echo '#!/bin/bash\n\
+set -e\n\
+echo "Starting Laravel application..."\n\
+\n\
+# Wait for database (optional timeout)\n\
+if [ "$DB_CONNECTION" = "mysql" ] && [ -n "$DB_HOST" ]; then\n\
+    echo "Waiting for database connection..."\n\
+    timeout=60\n\
+    while [ $timeout -gt 0 ]; do\n\
+        if mysql -h"$DB_HOST" -P"${DB_PORT:-3306}" -u"$DB_USERNAME" -p"$DB_PASSWORD" -e "SELECT 1" >/dev/null 2>&1; then\n\
+            echo "Database connected!"\n\
+            break\n\
+        fi\n\
+        echo "Waiting for database... ($timeout seconds left)"\n\
+        sleep 2\n\
+        timeout=$((timeout-2))\n\
+    done\n\
+fi\n\
+\n\
+# Generate app key if needed\n\
+if [ -z "$APP_KEY" ]; then\n\
+    php artisan key:generate --no-interaction\n\
+fi\n\
+\n\
+# Run migrations\n\
+php artisan migrate --force --no-interaction\n\
+\n\
+# Seed database if requested\n\
+if [ "$SEED_DATABASE" = "true" ]; then\n\
+    php artisan db:seed --force --no-interaction\n\
+fi\n\
+\n\
+# Cache everything\n\
+php artisan config:cache\n\
+php artisan route:cache\n\
+php artisan view:cache\n\
+\n\
+# Set permissions\n\
+chown -R www-data:www-data storage bootstrap/cache\n\
+chmod -R 775 storage bootstrap/cache\n\
+\n\
+echo "Laravel application ready!"\n\
+exec apache2-foreground' > /usr/local/bin/entrypoint.sh
+
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Expose port 80
+EXPOSE 80
+
+# Start with entrypoint
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

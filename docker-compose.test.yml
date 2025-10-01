@@ -1,0 +1,21 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.coolify
+    ports:
+      - "8080:80"
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_KEY=base64:JIan8waFhv4Bt4U3e4+hzxNiHE4QW9ty3feqsHR/n1U=
+      - APP_URL=http://localhost:8080
+      # Skip database for now - will fail gracefully
+      - DB_CONNECTION=mysql
+      - DB_HOST=nonexistent-host
+      - DB_PORT=3306
+      - DB_DATABASE=dididcrawler
+      - DB_USERNAME=root
+      - DB_PASSWORD=password
+      - SEED_DATABASE=false
+    restart: unless-stopped
