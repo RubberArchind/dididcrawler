@@ -26,7 +26,7 @@ cmds = [
   "cp /assets/worker-*.conf /etc/supervisor/conf.d/",
   "cp /assets/supervisord.conf /etc/supervisord.conf",
   "chmod +x /assets/start.sh",
-  "mkdir -p /var/log"
+  "mkdir -p /var/log /var/log/nginx /var/cache/nginx"
 ]
 
 [start]
@@ -188,6 +188,9 @@ http {
     }
 }
 NGINX
+
+# Replace literal ${PORT} in nginx.conf with actual value
+sed -i "s|\\${PORT}|${PORT}|g" /etc/nginx.conf
 
 # Basic permissions to avoid cache/storage issues
 chmod -R 775 storage bootstrap/cache || true
