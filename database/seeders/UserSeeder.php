@@ -13,6 +13,9 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+        // Clear existing users
+        \App\Models\User::truncate();
+        
         // Create superadmin user
         \App\Models\User::create([
             'name' => 'Super Admin',
