@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Controllers\DeviceController;
+use App\Http\Controllers\DeviceSubscriptionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\UserDashboardController;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -12,7 +15,9 @@ Route::get('/', function () {
 
 // Redirect to appropriate dashboard based on user role
 Route::get('/dashboard', function () {
-    if (Auth::user()->isSuperAdmin()) {
+    $user = Auth::user();
+
+    if ($user instanceof User && $user->isSuperAdmin()) {
         return redirect()->route('superadmin.dashboard');
     }
     return redirect()->route('user.dashboard');
@@ -31,6 +36,24 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::post('/settings', [SuperAdminController::class, 'updateSettings'])->name('settings.update');
     Route::post('/backup', [SuperAdminController::class, 'backup'])->name('backup');
     Route::post('/maintenance', [SuperAdminController::class, 'maintenance'])->name('maintenance');
+
+    Route::prefix('devices')->name('devices.')->group(function () {
+        Route::get('/dashboard', [DeviceController::class, 'dashboard'])->name('dashboard');
+    Route::get('/subscriptions/lookup', [DeviceSubscriptionController::class, 'lookup'])->name('subscriptions.lookup');
+    Route::post('/subscriptions/lookup', [DeviceSubscriptionController::class, 'resolve'])->name('subscriptions.lookup.submit');
+        Route::get('/', [DeviceController::class, 'index'])->name('index');
+        Route::get('/create', [DeviceController::class, 'create'])->name('create');
+        Route::post('/', [DeviceController::class, 'store'])->name('store');
+        Route::get('/{device}/subscriptions/create', [DeviceSubscriptionController::class, 'create'])->name('subscriptions.create');
+        Route::post('/{device}/subscriptions', [DeviceSubscriptionController::class, 'store'])->name('subscriptions.store');
+        Route::delete('/subscriptions/{subscription}', [DeviceSubscriptionController::class, 'destroy'])->name('subscriptions.destroy');
+        Route::patch('/subscriptions/{subscription}/toggle', [DeviceSubscriptionController::class, 'toggle'])->name('subscriptions.toggle');
+
+        Route::get('/{device}', [DeviceController::class, 'show'])->name('show');
+        Route::get('/{device}/edit', [DeviceController::class, 'edit'])->name('edit');
+        Route::put('/{device}', [DeviceController::class, 'update'])->name('update');
+        Route::delete('/{device}', [DeviceController::class, 'destroy'])->name('destroy');
+    });
 });
 
 // User routes

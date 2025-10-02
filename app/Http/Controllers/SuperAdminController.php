@@ -143,17 +143,18 @@ class SuperAdminController extends Controller
      */
     public function payments(Request $request)
     {
-        $date = $request->get('date', today());
+        $dateInput = $request->get('date');
+        $date = $dateInput ? \Carbon\Carbon::parse($dateInput) : today();
         
         $payments = Payment::with('user')
-            ->where('payment_date', $date)
+            ->where('payment_date', $date->format('Y-m-d'))
             ->get();
 
         // Create payments for today if they don't exist
         if ($payments->isEmpty()) {
             $this->generateDailyPayments($date);
             $payments = Payment::with('user')
-                ->where('payment_date', $date)
+                ->where('payment_date', $date->format('Y-m-d'))
                 ->get();
         }
 

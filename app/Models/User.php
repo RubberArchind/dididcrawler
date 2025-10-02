@@ -92,4 +92,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(Payment::class);
     }
+
+    /**
+     * Get devices assigned to the user
+     */
+    public function devices()
+    {
+        return $this->hasMany(Device::class);
+    }
 }

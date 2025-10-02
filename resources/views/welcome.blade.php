@@ -33,10 +33,7 @@
                                 Dashboard
                             </a>
                         @else
-                            <a href="{{ route('login') }}" class="inline-block px-4 py-2 text-sm rounded-sm hover:underline dark:text-[#EDEDEC]">Log in</a>
-                            @if (Route::has('register'))
-                                <a href="{{ route('register') }}" class="inline-block px-4 py-2 border border-[#19140035] dark:border-[#3E3E3A] rounded-sm text-sm dark:text-[#EDEDEC] hover:border-black dark:hover:border-white">Register</a>
-                            @endif
+                            <a href="{{ route('login') }}" class="inline-block px-4 py-2 border border-[#19140035] dark:border-[#3E3E3A] rounded-sm text-sm dark:text-[#EDEDEC] hover:border-black dark:hover:border-white">Log in</a>
                         @endauth
                     </nav>
                 @endif
@@ -66,11 +63,8 @@
                         </li>
                     </ul>
                     <div class="flex flex-col sm:flex-row gap-3">
-                        @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="inline-block px-5 py-2 bg-[#1b1b18] text-white border border-black rounded-sm text-sm hover:bg-black dark:bg-white dark:text-[#1b1b18] dark:hover:bg-[#eeeeec] dark:border-white">Get started</a>
-                        @endif
                         @if (Route::has('login'))
-                            <a href="{{ route('login') }}" class="inline-block px-5 py-2 border border-[#19140035] dark:border-[#3E3E3A] rounded-sm text-sm dark:text-[#EDEDEC] hover:border-black dark:hover:border-white">Sign in</a>
+                            <a href="{{ route('login') }}" class="inline-block px-5 py-2 bg-[#1b1b18] text-white border border-black rounded-sm text-sm hover:bg-black dark:bg-white dark:text-[#1b1b18] dark:hover:bg-[#eeeeec] dark:border-white">Sign in</a>
                         @endif
                     </div>
                 </div>
