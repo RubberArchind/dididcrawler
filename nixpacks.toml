@@ -1,41 +1,103 @@
 # nixpacks.toml
 
 [phases.setup]
-nixPkgs = ["...", "python311Packages.supervisor"]
+nixPkgs = [
+  "nginx",
+  "php83",
+  "php83Extensions.opcache",
+  "php83Extensions.pdo",
+  "php83Extensions.pdo_mysql",
+  "php83Extensions.mbstring",
+  "php83Extensions.tokenizer",
+  "php83Extensions.xml",
+  "php83Extensions.redis",
+  "php83Packages.composer",
+  "python311Packages.supervisor"
+]
+
+[phases.install]
+cmds = [
+  # Install PHP deps
+  "composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader",
+  # Laravel caches
+  "php artisan config:cache || true",
+  "php artisan route:cache || true",
+  "php artisan view:cache || true",
+  # Storage link
+  "php artisan storage:link || true"
+]
 
 [phases.build]
-# Prepare supervisor configs and start script, and run default build cmds
 cmds = [
-  "php artisan storage:link",
-  "mkdir -p /etc/supervisor/conf.d/",
+  "mkdir -p /etc/nginx /etc/nginx/conf.d /etc/supervisor/conf.d /var/log /run/php",
   "cp /assets/laravel-worker.conf /etc/supervisor/conf.d/",
   "cp /assets/supervisord.conf /etc/supervisord.conf",
-  "chmod +x /assets/start.sh",
-  "..."  # ensures default provider build steps are included
+  "chmod +x /assets/start.sh"
 ]
 
 [start]
-# Launch start script for full stack
 cmd = "/assets/start.sh"
 
 [staticAssets]
 "start.sh" = '''
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 PORT="${PORT:-8080}"
-NGINX_CONF="/etc/nginx/nginx.conf"
+NGINX_DIR="/etc/nginx"
+NGINX_CONF="${NGINX_DIR}/nginx.conf"
 
+# Sanity: nginx installed?
+if ! command -v nginx >/dev/null 2>&1; then
+  echo "[FATAL] nginx not installed. Add 'nginx' to nixPkgs." >&2
+  exit 1
+fi
+
+# Ensure dirs
+mkdir -p "${NGINX_DIR}" "${NGINX_DIR}/conf.d" /run/php
+
+# Minimal mime.types if missing
+if [[ ! -f "${NGINX_DIR}/mime.types" ]]; then
+  cat > "${NGINX_DIR}/mime.types" <<'EOF'
+types {
+    text/html html htm shtml;
+    text/css css;
+    text/xml xml;
+    image/gif gif;
+    image/jpeg jpeg jpg;
+    application/javascript js;
+    application/json json;
+    application/octet-stream bin exe dll;
+    application/zip zip;
+    application/pdf pdf;
+    application/x-font-ttf ttf;
+    application/font-woff woff;
+    application/font-woff2 woff2;
+    image/svg+xml svg svgz;
+}
+EOF
+fi
+
+# Render nginx config
 sed "s/__PORT__/${PORT}/g" /assets/nginx.template.conf > "${NGINX_CONF}"
 
-# Start PHP-FPM
-php-fpm -y /assets/php-fpm.conf
+# Locate php-fpm binary
+FPM_BIN="$(command -v php-fpm || true)"
+[[ -z "${FPM_BIN}" ]] && FPM_BIN="$(command -v php-fpm83 || true)"
+[[ -z "${FPM_BIN}" ]] && FPM_BIN="$(command -v php-fpm82 || true)"
+if [[ -z "${FPM_BIN}" ]]; then
+  echo "[FATAL] php-fpm binary not found." >&2
+  exit 1
+fi
 
-# Start Supervisor to manage queue workers
+# Start PHP-FPM
+"${FPM_BIN}" -y /assets/php-fpm.conf -R
+
+# Start Supervisor
 supervisord -c /etc/supervisord.conf
 
-# Start Nginx in the foreground
-nginx -g "daemon off;" -c "${NGINX_CONF}"
+# Run nginx in foreground
+exec nginx -g "daemon off;" -c "${NGINX_CONF}"
 '''
 
 "supervisord.conf" = '''
@@ -43,9 +105,8 @@ nginx -g "daemon off;" -c "${NGINX_CONF}"
 file=/assets/supervisor.sock
 
 [supervisord]
-logfile=/var/log/supervisord.log
-logfile_maxbytes=50MB
-logfile_backups=10
+logfile=/dev/null
+logfile_maxbytes=0
 loglevel=info
 pidfile=/assets/supervisord.pid
 nodaemon=false
@@ -61,18 +122,25 @@ files = /etc/supervisor/conf.d/*.conf
 [program:laravel-worker]
 process_name=%(program_name)s_%(process_num)02d
 command=php /app/artisan queue:work --sleep=3 --tries=3 --max-time=3600
+directory=/app
 autostart=true
 autorestart=true
 stopasgroup=true
 killasgroup=true
-numprocs=8
-startsecs=0
+numprocs=2
+startsecs=2
 stopwaitsecs=3600
-stdout_logfile=/var/log/laravel-worker.log
-stderr_logfile=/var/log/laravel-worker.log
+stdout_logfile=/dev/stdout
+stdout_logfile_maxbytes=0
+stderr_logfile=/dev/stderr
+stderr_logfile_maxbytes=0
 '''
 
 "php-fpm.conf" = '''
+[global]
+error_log = /dev/stderr
+daemonize = yes
+
 [www]
 listen = 127.0.0.1:9000
 user = www-data
@@ -81,16 +149,26 @@ listen.owner = www-data
 listen.group = www-data
 pm = dynamic
 pm.max_children = 50
+pm.start_servers = 8
 pm.min_spare_servers = 4
-pm.max_spare_servers = 32
-pm.start_servers = 18
+pm.max_spare_servers = 16
 clear_env = no
+catch_workers_output = yes
+request_terminate_timeout = 120s
+request_slowlog_timeout = 10s
+php_admin_value[error_log] = /dev/stderr
+php_admin_flag[log_errors] = on
+
+; Opcache
+php_admin_value[opcache.enable]=1
+php_admin_value[opcache.validate_timestamps]=0
+php_admin_value[opcache.jit]=1255
+php_admin_value[opcache.jit_buffer_size]=64M
 '''
 
 "nginx.template.conf" = '''
 user www-data www-data;
 worker_processes auto;
-daemon off;
 
 events {
     worker_connections 1024;
@@ -99,24 +177,35 @@ events {
 http {
     include       /etc/nginx/mime.types;
     default_type  application/octet-stream;
-    sendfile       on;
+
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+
+    access_log /dev/stdout;
+    error_log  /dev/stderr info;
+
     keepalive_timeout 65;
-    index index.php index.html;
     client_max_body_size 35M;
+
+    fastcgi_read_timeout 120s;
 
     server {
         listen __PORT__;
-        server_name localhost;
+        server_name _;
 
         root /app/public;
-        try_files $uri $uri/ /index.php?$query_string;
+        index index.php index.html;
+
+        location / {
+            try_files $uri /index.php?$query_string;
+        }
 
         location ~ \.php$ {
-            fastcgi_split_path_info ^(.+\.php)(/.+)$;
+            include /etc/nginx/fastcgi_params;
             fastcgi_pass 127.0.0.1:9000;
             fastcgi_index index.php;
-            include /etc/nginx/fastcgi_params;
-            fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
             fastcgi_param PHP_VALUE "upload_max_filesize=35M\npost_max_size=35M";
         }
 
