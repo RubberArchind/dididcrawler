@@ -138,4 +138,3 @@ const port = process.env.PORT || '80'
 tpl = tpl.replace(/\$\{PORT\}/g, port)
 fs.writeFileSync(outPath, tpl)
 '''
-'''
