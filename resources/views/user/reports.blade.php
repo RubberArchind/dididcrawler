@@ -67,7 +67,9 @@
             <h5 class="card-title mb-0">Weekly Transaction Trend</h5>
         </div>
         <div class="card-body">
-            <canvas id="weeklyChart" height="100"></canvas>
+            <div style="height: 350px;"><!-- Increased height container -->
+                <canvas id="weeklyChart"></canvas>
+            </div>
         </div>
     </div>
 
@@ -175,14 +177,19 @@
     new Chart(ctx, {
         type: 'line',
         data: {
-            labels: weeklyData.map(d => d.date),
+            labels: weeklyData.map(d => `${d.day} ${d.date}`), // Add day of week to label
             datasets: [
                 {
                     label: 'Total Amount',
                     data: weeklyData.map(d => d.total_amount),
                     borderColor: 'rgb(75, 192, 192)',
                     backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    borderWidth: 2,
                     tension: 0.1,
+                    fill: true,
+                    pointBackgroundColor: 'rgb(75, 192, 192)',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
                     yAxisID: 'y'
                 },
                 {
@@ -190,13 +197,19 @@
                     data: weeklyData.map(d => d.count),
                     borderColor: 'rgb(255, 99, 132)',
                     backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                    borderWidth: 2,
                     tension: 0.1,
+                    fill: true,
+                    pointBackgroundColor: 'rgb(255, 99, 132)',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
                     yAxisID: 'y1'
                 }
             ]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             interaction: {
                 mode: 'index',
                 intersect: false,
@@ -204,18 +217,33 @@
             scales: {
                 x: {
                     display: true,
+                    grid: {
+                        color: 'rgba(0,0,0,0.05)'
+                    },
                     title: {
                         display: true,
-                        text: 'Date'
+                        text: 'Last 7 Days',
+                        color: '#666',
+                        font: {
+                            weight: 'bold'
+                        }
                     }
                 },
                 y: {
                     type: 'linear',
                     display: true,
                     position: 'left',
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0,0,0,0.05)'
+                    },
                     title: {
                         display: true,
-                        text: 'Amount (Rp)'
+                        text: 'Amount (Rp)',
+                        color: 'rgb(75, 192, 192)',
+                        font: {
+                            weight: 'bold'
+                        }
                     },
                     ticks: {
                         callback: function(value) {
@@ -227,18 +255,42 @@
                     type: 'linear',
                     display: true,
                     position: 'right',
-                    title: {
-                        display: true,
-                        text: 'Transaction Count'
-                    },
+                    beginAtZero: true,
                     grid: {
                         drawOnChartArea: false,
+                        color: 'rgba(0,0,0,0.05)'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Transaction Count',
+                        color: 'rgb(255, 99, 132)',
+                        font: {
+                            weight: 'bold'
+                        }
                     },
                 }
             },
             plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20
+                    }
+                },
                 tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    titleColor: '#333',
+                    bodyColor: '#333',
+                    borderColor: 'rgba(0, 0, 0, 0.1)',
+                    borderWidth: 1,
+                    padding: 10,
+                    cornerRadius: 5,
+                    displayColors: true,
                     callbacks: {
+                        title: function(context) {
+                            return context[0].label;
+                        },
                         label: function(context) {
                             let label = context.dataset.label || '';
                             if (label) {

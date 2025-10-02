@@ -82,10 +82,24 @@ class UserDashboardController extends Controller
                 ->success()
                 ->sum('net_amount');
             
+            $daily_count = Transaction::where('user_id', $user->id)
+                ->whereDate('paid_at', $date_check)
+                ->success()
+                ->count();
+                
+            // In development, if no transactions are found, add sample data
+            // Remove this in production!
+            if (app()->environment('local') && $daily_count == 0) {
+                // Generate random sample data for development/testing
+                $daily_revenue = mt_rand(100000, 5000000);
+                $daily_count = mt_rand(1, 15);
+            }
+            
             $weekly_data[] = [
-                'date' => $date_check->format('Y-m-d'),
+                'date' => $date_check->format('d M'), // Short date format for readability 
                 'day' => $date_check->format('D'),
-                'revenue' => $daily_revenue,
+                'total_amount' => $daily_revenue,
+                'count' => $daily_count,
             ];
         }
 

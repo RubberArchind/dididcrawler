@@ -107,7 +107,35 @@ class SuperAdminController extends Controller
             'net_amount' => $daily_report->sum('net_amount'),
         ];
 
-        return view('superadmin.reports', compact('daily_report', 'total_stats', 'date'));
+        // Weekly data for chart
+        $weekly_data = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date_check = now()->subDays($i);
+            $daily_amount = Transaction::success()
+                ->whereDate('paid_at', $date_check)
+                ->sum('net_amount');
+                
+            $daily_count = Transaction::success()
+                ->whereDate('paid_at', $date_check)
+                ->count();
+                
+            // In development, if no transactions are found, add sample data
+            // Remove this in production!
+            if (app()->environment('local') && $daily_count == 0) {
+                // Generate random sample data for development/testing
+                $daily_amount = mt_rand(500000, 10000000);
+                $daily_count = mt_rand(5, 30);
+            }
+            
+            $weekly_data[] = [
+                'date' => $date_check->format('d M'),
+                'day' => $date_check->format('D'),
+                'total_amount' => $daily_amount,
+                'count' => $daily_count,
+            ];
+        }
+
+        return view('superadmin.reports', compact('daily_report', 'total_stats', 'date', 'weekly_data'));
     }
 
     /**

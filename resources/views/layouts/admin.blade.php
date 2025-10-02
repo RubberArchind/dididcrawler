@@ -119,9 +119,10 @@
                 margin-left: 0;
             }
             
-            .mobile-toggle {
-                display: block;
-            }
+            .mobile-toggle { display: none; }
+
+            /* Bottom nav space so content isn't hidden */
+            .content { padding-bottom: 5rem; }
         }
         
         @media (min-width: 769px) {
@@ -149,15 +150,7 @@
     </style>
 </head>
 <body>
-    <!-- Mobile Toggle Button -->
-    <button class="btn btn-primary mobile-toggle position-fixed" 
-            style="top: 1rem; left: 1rem; z-index: 1001;"
-            onclick="toggleSidebar()">
-        <i class="bi bi-list"></i>
-    </button>
-    
-    <!-- Mobile Overlay -->
-    <div class="mobile-overlay" id="mobileOverlay" onclick="toggleSidebar()"></div>
+    <!-- Mobile Toggle removed in favor of bottom navbar -->
     
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
@@ -300,44 +293,59 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Sidebar Toggle Script -->
-    <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('mobileOverlay');
-            
-            sidebar.classList.toggle('show');
-            overlay.classList.toggle('show');
-        }
-        
-        // Close sidebar when clicking on main content on mobile
-        document.addEventListener('DOMContentLoaded', function() {
-            const mainContent = document.querySelector('.main-content');
-            
-            if (window.innerWidth <= 768) {
-                mainContent.addEventListener('click', function() {
-                    const sidebar = document.getElementById('sidebar');
-                    const overlay = document.getElementById('mobileOverlay');
-                    
-                    if (sidebar.classList.contains('show')) {
-                        sidebar.classList.remove('show');
-                        overlay.classList.remove('show');
-                    }
-                });
-            }
-        });
-        
-        // Handle window resize
-        window.addEventListener('resize', function() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('mobileOverlay');
-            
-            if (window.innerWidth > 768) {
-                sidebar.classList.remove('show');
-                overlay.classList.remove('show');
-            }
-        });
-    </script>
+    @php
+        $isSuper = auth()->check() && auth()->user()->isSuperAdmin();
+    @endphp
+
+    <!-- Fixed Bottom Navbar for Mobile -->
+    <nav class="d-md-none navbar bg-white border-top fixed-bottom">
+        <div class="container-fluid px-0">
+            <div class="d-flex justify-content-around w-100 text-center">
+                @if($isSuper)
+                    <a href="{{ route('superadmin.dashboard') }}" class="text-decoration-none {{ request()->routeIs('superadmin.dashboard') ? 'text-primary' : 'text-muted' }}">
+                        <i class="bi bi-speedometer2 fs-5 d-block"></i>
+                        <small>Dashboard</small>
+                    </a>
+                    <a href="{{ route('superadmin.reports') }}" class="text-decoration-none {{ request()->routeIs('superadmin.reports') ? 'text-primary' : 'text-muted' }}">
+                        <i class="bi bi-graph-up fs-5 d-block"></i>
+                        <small>Reports</small>
+                    </a>
+                    <a href="{{ route('superadmin.payments') }}" class="text-decoration-none {{ request()->routeIs('superadmin.payments') ? 'text-primary' : 'text-muted' }}">
+                        <i class="bi bi-credit-card fs-5 d-block"></i>
+                        <small>Payments</small>
+                    </a>
+                    <a href="{{ route('superadmin.settings') }}" class="text-decoration-none {{ request()->routeIs('superadmin.settings') ? 'text-primary' : 'text-muted' }}">
+                        <i class="bi bi-gear fs-5 d-block"></i>
+                        <small>Settings</small>
+                    </a>
+                @else
+                    <a href="{{ route('user.dashboard') }}" class="text-decoration-none {{ request()->routeIs('user.dashboard') ? 'text-primary' : 'text-muted' }}">
+                        <i class="bi bi-speedometer2 fs-5 d-block"></i>
+                        <small>Dashboard</small>
+                    </a>
+                    <a href="{{ route('user.reports') }}" class="text-decoration-none {{ request()->routeIs('user.reports') ? 'text-primary' : 'text-muted' }}">
+                        <i class="bi bi-graph-up fs-5 d-block"></i>
+                        <small>Reports</small>
+                    </a>
+                    <a href="{{ route('user.payments') }}" class="text-decoration-none {{ request()->routeIs('user.payments') ? 'text-primary' : 'text-muted' }}">
+                        <i class="bi bi-credit-card fs-5 d-block"></i>
+                        <small>Payments</small>
+                    </a>
+                    <a href="{{ route('profile.edit') }}" class="text-decoration-none {{ request()->routeIs('profile.*') ? 'text-primary' : 'text-muted' }}">
+                        <i class="bi bi-person fs-5 d-block"></i>
+                        <small>Profile</small>
+                    </a>
+                @endif
+                <form method="POST" action="{{ route('logout') }}" class="m-0 p-0">
+                    @csrf
+                    <button type="submit" class="btn btn-link text-decoration-none {{ request()->routeIs('logout') ? 'text-primary' : 'text-muted' }}">
+                        <i class="bi bi-box-arrow-right fs-5 d-block"></i>
+                        <small>Logout</small>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
     
     @stack('scripts')
 </body>
