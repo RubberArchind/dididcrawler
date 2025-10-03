@@ -10,21 +10,21 @@ class HttpsProtocol
 {
     public function handle(Request $request, Closure $next)
     {
-        if (!$request->secure() && App::environment('production')) {
-            // If we're behind a proxy that terminates SSL
-            if ($request->header('X-Forwarded-Proto') === 'https') {
-                return $next($request);
+        if (!$request->secure() && (App::environment('production') || App::environment('staging'))) {
+            // Check for proxies and load balancers
+            if ($request->header('X-Forwarded-Proto') !== 'https') {
+                return redirect()->secure($request->getRequestUri(), 301);
             }
-            
-            // Force HTTPS redirect
-            $request->headers->set('X-Forwarded-Proto', 'https');
-            return redirect()->secure($request->getRequestUri(), 301);
         }
 
-        // Add HSTS header
         $response = $next($request);
-        if (App::environment('production')) {
+        
+        // Add security headers
+        if (App::environment('production') || App::environment('staging')) {
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+            $response->headers->set('X-Content-Type-Options', 'nosniff');
+            $response->headers->set('X-XSS-Protection', '1; mode=block');
+            $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
         }
         
         return $response;
