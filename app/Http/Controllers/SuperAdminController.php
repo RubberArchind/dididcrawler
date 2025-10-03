@@ -273,31 +273,21 @@ class SuperAdminController extends Controller
     public function backup()
     {
         try {
-            $filename = 'backup_' . now()->format('Y-m-d_H-i-s') . '.sql';
-            $path = storage_path('app/backups/');
+            // Run the backup command
+            Artisan::call('backup:run', ['--only-db' => true]);
             
-            if (!file_exists($path)) {
-                mkdir($path, 0755, true);
-            }
-
-            // Simple database backup (you might want to use a more sophisticated method)
-            $command = sprintf(
-                'mysqldump --user=%s --password=%s --host=%s %s > %s',
-                config('database.connections.mysql.username'),
-                config('database.connections.mysql.password'),
-                config('database.connections.mysql.host'),
-                config('database.connections.mysql.database'),
-                $path . $filename
-            );
-
-            exec($command, $output, $return_var);
-
-            if ($return_var === 0) {
-                return back()->with('success', "Backup created successfully: {$filename}");
+            // Get the output
+            $output = Artisan::output();
+            
+            // Check if the backup was successful
+            if (str_contains($output, 'Successfully copied zip to disk')) {
+                return back()->with('success', 'Backup created successfully!');
             } else {
-                return back()->with('error', 'Backup failed');
+                Log::error('Backup failed with output: ' . $output);
+                return back()->with('error', 'Backup failed. Please check the logs for details.');
             }
         } catch (\Exception $e) {
+            Log::error('Backup error: ' . $e->getMessage());
             return back()->with('error', 'Backup failed: ' . $e->getMessage());
         }
     }
