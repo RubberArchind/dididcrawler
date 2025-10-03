@@ -126,10 +126,28 @@ http {
     tcp_nopush   on;
     server_names_hash_bucket_size 128; # this seems to be required for some vhosts
 
+    # Redirect HTTP to HTTPS
     server {
         listen ${PORT};
         listen [::]:${PORT};
-        server_name localhost;
+        server_name _;
+        return 301 https://$host$request_uri;
+    }
+
+    # HTTPS server
+    server {
+        listen ${PORT} ssl;
+        listen [::]:${PORT} ssl;
+        server_name _;
+
+        # SSL configuration
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_prefer_server_ciphers on;
+        ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+        
+        # SSL certificates - These will be provided by your deployment platform
+        ssl_certificate     /etc/ssl/certs/ssl-cert-snakeoil.pem;
+        ssl_certificate_key /etc/ssl/private/ssl-cert-snakeoil.key;
 
         $if(NIXPACKS_PHP_ROOT_DIR) (
             root ${NIXPACKS_PHP_ROOT_DIR};
