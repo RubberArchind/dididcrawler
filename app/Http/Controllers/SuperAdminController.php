@@ -233,9 +233,8 @@ class SuperAdminController extends Controller
                 return response()->json(['error' => 'Order not found'], 404);
             }
 
-            // Calculate fee
-            $feePercentage = Setting::getGlobalMdrFee();
-            $feeAmount = ($amount * $feePercentage) / 100;
+            // Calculate fee based on settings
+            $feeAmount = Setting::calculateTransactionFee($amount);
             $netAmount = $amount - $feeAmount;
 
             // Create or update transaction

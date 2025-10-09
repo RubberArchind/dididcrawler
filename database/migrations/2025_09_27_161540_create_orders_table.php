@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('order_number')->unique(); // nomor order yang terklasifikasi per user
+            $table->string('order_id')->unique(); // ID order yang terklasifikasi per user
             $table->string('external_order_id')->nullable(); // ID order dari sistem eksternal
             $table->string('customer_name')->nullable();
             $table->string('customer_email')->nullable();
@@ -26,7 +26,7 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['user_id', 'created_at']); // index untuk laporan per user
-            $table->index('order_number'); // index untuk pencarian order
+            $table->index('order_id'); // index untuk pencarian order
         });
     }
 

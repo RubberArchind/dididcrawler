@@ -69,6 +69,30 @@ class Setting extends Model
      */
     public static function getGlobalMdrFee()
     {
-        return self::get('global_mdr_fee', 2.5);
+        return self::get('fee_percentage', 2.5);
+    }
+
+    /**
+     * Calculate transaction fee based on settings
+     */
+    public static function calculateTransactionFee(float $amount): float
+    {
+        $feePercentage = self::get('fee_percentage', 2.5);
+        $minimumFee = self::get('minimum_fee', 1000);
+        $maximumFee = self::get('maximum_fee', 10000);
+
+        // Calculate fee based on percentage
+        $calculatedFee = ($amount * $feePercentage) / 100;
+
+        // Apply minimum and maximum constraints
+        if ($calculatedFee < $minimumFee) {
+            return $minimumFee;
+        }
+        
+        if ($calculatedFee > $maximumFee) {
+            return $maximumFee;
+        }
+
+        return $calculatedFee;
     }
 }

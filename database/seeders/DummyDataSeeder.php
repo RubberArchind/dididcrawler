@@ -68,27 +68,20 @@ class DummyDataSeeder extends Seeder
                     // Create order
                     $order = Order::create([
                         'user_id' => $user->id,
-                        'order_number' => sprintf('%s%04d', $user->username, $transactionId),
+                        'order_id' => 'order-' . $user->device_id . '-' . round(microtime(true) * 1000),
                         'external_order_id' => 'EXT_' . time() . '_' . $transactionId,
                         'customer_name' => 'Customer ' . $transactionId,
                         'customer_email' => 'customer' . $transactionId . '@example.com',
                         'customer_phone' => '+628' . rand(100000000, 999999999),
-                        'amount' => rand(50000, 500000), // 50k - 500k
+                        'amount' => rand(0, 1) ? 5000 : 10000,
                         'description' => 'Payment for services - Order #' . $transactionId,
-                        'status' => 'completed',
+                        'status' => 'success',
                         'created_at' => $date->copy()->addMinutes(rand(0, 1440)), // Random time during the day
                         'updated_at' => $date->copy()->addMinutes(rand(0, 1440)),
                     ]);
                     
-                    // Random transaction status (90% success, 8% pending, 2% failed)
-                    $statusRand = rand(1, 100);
-                    if ($statusRand <= 90) {
-                        $status = 'success';
-                    } elseif ($statusRand <= 98) {
-                        $status = 'pending';
-                    } else {
-                        $status = 'failed';
-                    }
+                    // Always set transaction status to success
+                    $status = 'success';
                     
                     // Calculate fee (only for successful transactions)
                     $feeAmount = 0;
@@ -101,9 +94,8 @@ class DummyDataSeeder extends Seeder
                         $paidAt = $order->created_at->copy()->addMinutes(rand(1, 30));
                     }
                     
-                    // Generate payment methods
-                    $paymentMethods = ['credit_card', 'bank_transfer', 'e_wallet', 'qris', 'virtual_account'];
-                    $paymentMethod = $paymentMethods[array_rand($paymentMethods)];
+                    // Set payment method to QRIS only
+                    $paymentMethod = 'qris';
                     
                     // Create transaction
                     Transaction::create([
