@@ -7,6 +7,7 @@ use App\Models\Transaction;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Setting;
+use App\Models\Device;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -233,6 +234,21 @@ class SuperAdminController extends Controller
                 return response()->json(['error' => 'Order not found'], 404);
             }
 
+            // Extract device_uid from order_id and find device
+            $deviceUid = Transaction::extractDeviceUidFromOrderId($orderId);
+            $device = null;
+            
+            if ($deviceUid) {
+                $device = Device::where('device_uid', $deviceUid)->first();
+                
+                if (!$device) {
+                    Log::warning('Device not found for webhook transaction', [
+                        'device_uid' => $deviceUid,
+                        'order_id' => $orderId
+                    ]);
+                }
+            }
+
             // Calculate fee based on settings
             $feeAmount = Setting::calculateTransactionFee($amount);
             $netAmount = $amount - $feeAmount;
@@ -243,6 +259,7 @@ class SuperAdminController extends Controller
                 [
                     'user_id' => $order->user_id,
                     'order_id' => $order->id,
+                    'device_id' => $device?->id,
                     'amount' => $amount,
                     'fee_amount' => $feeAmount,
                     'net_amount' => $netAmount,

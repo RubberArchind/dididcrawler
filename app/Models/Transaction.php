@@ -12,6 +12,7 @@ class Transaction extends Model
     protected $fillable = [
         'user_id',
         'order_id',
+        'device_id',
         'transaction_id',
         'amount',
         'fee_amount',
@@ -47,6 +48,29 @@ class Transaction extends Model
     public function order()
     {
         return $this->belongsTo(Order::class);
+    }
+
+    /**
+     * Get the device associated with the transaction
+     */
+    public function device()
+    {
+        return $this->belongsTo(Device::class);
+    }
+
+    /**
+     * Extract device UID from order_id format: order-{device_uid}-{random}
+     */
+    public static function extractDeviceUidFromOrderId(string $orderId): ?string
+    {
+        // Format: order-TEST123-608975
+        $parts = explode('-', $orderId);
+        
+        if (count($parts) >= 3 && $parts[0] === 'order') {
+            return $parts[1]; // Return TEST123
+        }
+        
+        return null;
     }
 
     /**

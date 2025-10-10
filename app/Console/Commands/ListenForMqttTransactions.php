@@ -39,32 +39,33 @@ class ListenForMqttTransactions extends Command
      */
     public function handle()
     {
-        $host = $this->option('host') ?? Setting::get('mqtt_host', config('mqtt.host'));
-        $port = $this->option('port') ?? Setting::get('mqtt_port', config('mqtt.port'));
-        $username = $this->option('username') ?? Setting::get('mqtt_username', config('mqtt.username'));
-        $password = $this->option('password') ?? Setting::get('mqtt_password', config('mqtt.password'));
+        // $host = $this->option('host') ?? Setting::get('mqtt_host', config('mqtt.host'));
+        // $port = $this->option('port') ?? Setting::get('mqtt_port', config('mqtt.port'));
+        // $username = $this->option('username') ?? Setting::get('mqtt_username', config('mqtt.username'));
+        // $password = $this->option('password') ?? Setting::get('mqtt_password', config('mqtt.password'));
+        $host = Setting::get('mqtt_host', config('mqtt.host'));
+        $port = (int) Setting::get('mqtt_port', config('mqtt.port'));
+        $username = Setting::get('mqtt_username', config('mqtt.username'));
+        $password = Setting::get('mqtt_password', config('mqtt.password'));
         $topic = $this->option('topic') ?? 'transaksi/status/#';
 
         $this->info('Starting MQTT Transaction Status Listener...');
         $this->info("Connecting to: {$host}:{$port}");
+        $this->info("Username: " . ($username ?: '(none)'));
         $this->info("Subscribing to: {$topic}");
 
         try {
             $clientId = 'laravel_transaction_listener_' . uniqid();
             $mqtt = new MqttClient($host, $port, $clientId);
 
+            // Don't set LastWillTopic in connection settings - it might cause ACL issues
             $connectionSettings = (new ConnectionSettings)
                 ->setUseTls(true)
                 ->setTlsSelfSignedAllowed(true)
-                ->setUsername($username)
-                ->setPassword($password)
+                ->setUsername($username ?: null)
+                ->setPassword($password ?: null)
                 ->setKeepAliveInterval(60)
-                ->setConnectTimeout(10)
-                ->setSocketTimeout(5)
-                ->setResendTimeout(10)
-                ->setLastWillTopic($topic)
-                ->setLastWillMessage('Transaction listener disconnected')
-                ->setLastWillQualityOfService(1);
+                ->setConnectTimeout(10);
 
             $mqtt->connect($connectionSettings, true);
 
@@ -147,6 +148,24 @@ class ListenForMqttTransactions extends Command
                 return;
             }
 
+            // Extract device_uid from order_id and find device
+            $deviceUid = Transaction::extractDeviceUidFromOrderId($orderId);
+            $device = null;
+            
+            if ($deviceUid) {
+                $device = \App\Models\Device::where('device_uid', $deviceUid)->first();
+                
+                if ($device) {
+                    $this->line("Device found: {$deviceUid}");
+                } else {
+                    $this->warn("Device not found: {$deviceUid}");
+                    Log::warning('Device not found for transaction', [
+                        'device_uid' => $deviceUid,
+                        'order_id' => $orderId
+                    ]);
+                }
+            }
+
             // Calculate fee based on settings
             $amount = $payload['amount'] ?? $order->amount;
             $feeAmount = $this->calculateFee($amount);
@@ -156,6 +175,7 @@ class ListenForMqttTransactions extends Command
             $transaction = Transaction::create([
                 'user_id' => $order->user_id,
                 'order_id' => $order->id,
+                'device_id' => $device?->id,
                 'transaction_id' => $payload['transaction_id'] ?? 'MQTT-' . $orderId . '-' . time(),
                 'amount' => $amount,
                 'fee_amount' => $feeAmount,
@@ -171,6 +191,7 @@ class ListenForMqttTransactions extends Command
 
             $this->info("✓ Transaction created successfully: {$transaction->transaction_id}");
             $this->info("  Order: {$orderId}");
+            $this->info("  Device: " . ($device ? $device->device_uid : 'N/A'));
             $this->info("  Amount: Rp " . number_format($transaction->amount, 0, ',', '.'));
             $this->info("  Fee: Rp " . number_format($transaction->fee_amount, 0, ',', '.'));
             $this->info("  Net Amount: Rp " . number_format($transaction->net_amount, 0, ',', '.'));

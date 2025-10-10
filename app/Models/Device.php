@@ -59,6 +59,11 @@ class Device extends Model
         return $this->hasOne(DeviceHeartbeat::class)->latestOfMany('reported_at');
     }
 
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
     public function scopeAssigned($query)
     {
         return $query->whereNotNull('user_id');
