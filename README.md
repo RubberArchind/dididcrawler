@@ -11,7 +11,9 @@
 
 This repository builds on Laravel with features tailored for the DididCrawler platform, including device lifecycle management, subscription tracking, and MQTT powered heartbeat monitoring.
 
-### MQTT Heartbeat Listener
+### MQTT Listeners
+
+#### Heartbeat Listener
 
 Devices publish heartbeat payloads to `$MQTT_TOPIC_PREFIX/<device_uid>/heartbeat`. To ingest those heartbeats and keep the dashboard up to date, run the bundled listener:
 
@@ -30,6 +32,38 @@ Configure the broker either through the SuperAdmin settings screen or via enviro
 | `MQTT_CLIENT_ID` | Client identifier suffix | `dididcrawler-listener` |
 
 Use `--once` to process queued messages and exit—ideal for cron or containerised one-shot workers.
+
+#### Transaction Status Listener
+
+The system listens to `transaksi/status/<order_id>` for payment notifications. When a message with `status: paid` is received, it automatically creates a transaction record and marks the order as completed:
+
+```bash
+php artisan mqtt:listen-transactions
+```
+
+**Topic Format:** `transaksi/status/order-TEST123-608975`
+
+**Payload Example (JSON):**
+```json
+{
+  "order_id": "order-TEST123-608975",
+  "status": "paid",
+  "amount": 50000,
+  "fee_amount": 1500,
+  "payment_method": "qris",
+  "transaction_id": "TRX-123456",
+  "paid_at": "2025-10-10T08:30:00Z"
+}
+```
+
+**MessagePack Support:** The listener also supports binary MessagePack payloads for reduced bandwidth.
+
+**Behavior:**
+- Only processes messages with `status: "paid"`
+- Automatically creates transaction records
+- Updates order status to `completed`
+- Prevents duplicate transactions for the same order
+- Uses same MQTT configuration as heartbeat listener
 
 ## About Laravel
 
