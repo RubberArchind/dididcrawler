@@ -7,6 +7,7 @@ use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use MessagePack\MessagePack;
 use PhpMqtt\Client\ConnectionSettings;
 use PhpMqtt\Client\MqttClient;
 use PhpMqtt\Client\Exceptions\MqttClientException;
@@ -122,13 +123,64 @@ class ListenForMqttHeartbeats extends Command
 
     protected function decodePayload(string $message): array
     {
-        $decoded = json_decode($message, true);
+        // Try MessagePack first (binary format from ESP32)
+        if ($this->isBinary($message)) {
+            try {
+                $decoded = MessagePack::unpack($message);
+                
+                return $this->normalizeMsgPackData($decoded);
+            } catch (\Throwable $e) {
+                Log::warning('MessagePack decode failed, trying JSON fallback', [
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
 
+        // Fallback to JSON
+        $decoded = json_decode($message, true);
         if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
             return $decoded;
         }
 
         return ['raw' => $message];
+    }
+
+    protected function isBinary(string $data): bool
+    {
+        // MessagePack binary data won't be valid UTF-8
+        // Also check for common MessagePack markers (0x80-0x8f for fixmap, 0x90-0x9f for fixarray)
+        return !mb_check_encoding($data, 'UTF-8') || 
+               (ord($data[0]) >= 0x80 && ord($data[0]) <= 0x9f) ||
+               ord($data[0]) >= 0xa0;
+    }
+
+    protected function normalizeMsgPackData(mixed $data): array
+    {
+        // Convert to array if needed
+        if (is_object($data)) {
+            $data = (array) $data;
+        }
+
+        if (!is_array($data)) {
+            return ['raw' => $data];
+        }
+
+        // Map shortened keys back to full names
+        $keyMap = [
+            'ss' => 'ssid',
+            'rs' => 'rssi',
+            'up' => 'uptime_ms',
+            'nm' => 'nominal',
+            'oid' => 'order_id',
+        ];
+
+        $normalized = [];
+        foreach ($data as $key => $value) {
+            $normalizedKey = $keyMap[$key] ?? $key;
+            $normalized[$normalizedKey] = $value;
+        }
+
+        return $normalized;
     }
 
     protected function resolveTimestamp(array $payload): ?Carbon
