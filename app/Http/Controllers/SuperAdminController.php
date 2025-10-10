@@ -197,10 +197,10 @@ class SuperAdminController extends Controller
     public function updateSettings(Request $request)
     {
         foreach ($request->except('_token') as $key => $value) {
-            $setting = Setting::where('key', $key)->first();
-            if ($setting) {
-                $setting->update(['value' => $value]);
-            }
+            Setting::updateOrCreate(
+                ['key' => $key],
+                ['value' => $value]
+            );
         }
 
         return back()->with('success', 'Settings updated successfully!');

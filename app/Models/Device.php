@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Device extends Model
 {
@@ -46,6 +49,16 @@ class Device extends Model
         return $this->hasMany(DeviceSubscription::class);
     }
 
+    public function heartbeats(): HasMany
+    {
+        return $this->hasMany(DeviceHeartbeat::class);
+    }
+
+    public function latestHeartbeat(): HasOne
+    {
+        return $this->hasOne(DeviceHeartbeat::class)->latestOfMany('reported_at');
+    }
+
     public function scopeAssigned($query)
     {
         return $query->whereNotNull('user_id');
@@ -70,27 +83,21 @@ class Device extends Model
 
     public function calculateStatus(): string
     {
-        $activeSubscriptions = $this->subscriptions()
-            ->where('is_active', true)
-            ->where(function ($query) {
-                $query->whereNull('ends_on')->orWhere('ends_on', '>=', now());
-            })
-            ->orderBy('ends_on')
-            ->get();
-
-        if ($activeSubscriptions->isEmpty()) {
-            return 'inactive';
+        if (! $this->last_seen_at) {
+            return 'dead';
         }
 
-        $nearestExpiry = $activeSubscriptions
-            ->filter(fn ($subscription) => $subscription->ends_on !== null)
-            ->min('ends_on');
+        $hoursSinceSeen = $this->last_seen_at->diffInHours(now());
 
-        if ($nearestExpiry && now()->diffInDays($nearestExpiry, false) <= 7) {
-            return 'maintenance';
+        if ($hoursSinceSeen < 24) {
+            return 'active';
         }
 
-        return 'active';
+        if ($hoursSinceSeen < 48) {
+            return 'idle';
+        }
+
+        return 'dead';
     }
 
     public function refreshStatus(): void
@@ -104,5 +111,23 @@ class Device extends Model
                 $this->saveQuietly();
             }
         }
+    }
+
+    public function recordHeartbeat(array $payload, Carbon $reportedAt, string $topic, ?string $status = null): DeviceHeartbeat
+    {
+        if (!$this->exists) {
+            $this->save();
+        }
+
+        $this->forceFill(['last_seen_at' => $reportedAt])->saveQuietly();
+
+        $this->refreshStatus();
+
+        return $this->heartbeats()->create([
+            'topic' => $topic,
+            'status' => $status,
+            'payload' => $payload,
+            'reported_at' => $reportedAt,
+        ]);
     }
 }

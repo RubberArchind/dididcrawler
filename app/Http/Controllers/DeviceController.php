@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Device;
+use App\Models\DeviceHeartbeat;
 use App\Models\DeviceSubscription;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class DeviceController extends Controller
@@ -40,9 +42,17 @@ class DeviceController extends Controller
             ->orderBy('ends_on')
             ->get();
 
-        $recentActivity = Device::with('user')
-            ->orderByDesc('last_seen_at')
-            ->take(5)
+        $recentHeartbeats = DeviceHeartbeat::with(['device.user'])
+            ->select('device_heartbeats.*')
+            ->join(
+                DB::raw('(SELECT device_id, MAX(reported_at) as max_reported_at FROM device_heartbeats GROUP BY device_id) as latest'),
+                function ($join) {
+                    $join->on('device_heartbeats.device_id', '=', 'latest.device_id')
+                         ->on('device_heartbeats.reported_at', '=', 'latest.max_reported_at');
+                }
+            )
+            ->orderBy('device_heartbeats.reported_at', 'desc')
+            ->limit(10)
             ->get();
 
         $statusBreakdown = Device::selectRaw('status, COUNT(*) as total')->groupBy('status')->pluck('total', 'status');
@@ -53,7 +63,7 @@ class DeviceController extends Controller
             'unassignedDevices',
             'activeSubscriptions',
             'expiringSoon',
-            'recentActivity',
+            'recentHeartbeats',
             'statusBreakdown'
         ));
     }

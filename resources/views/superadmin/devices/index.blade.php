@@ -17,8 +17,8 @@
                 <select name="status" id="status" class="form-select form-select-sm" onchange="this.form.submit()">
                     <option value="">All</option>
                     <option value="active" @selected(request('status') === 'active')>Active</option>
-                    <option value="inactive" @selected(request('status') === 'inactive')>Inactive</option>
-                    <option value="maintenance" @selected(request('status') === 'maintenance')>Maintenance</option>
+                    <option value="idle" @selected(request('status') === 'idle')>Idle</option>
+                    <option value="dead" @selected(request('status') === 'dead')>Dead</option>
                 </select>
             </form>
             <a href="{{ route('superadmin.devices.create') }}" class="btn btn-primary">
@@ -74,8 +74,8 @@
                                     @php
                                         $statusColors = [
                                             'active' => 'success',
-                                            'inactive' => 'secondary',
-                                            'maintenance' => 'warning',
+                                            'idle' => 'warning',
+                                            'dead' => 'danger',
                                         ];
                                     @endphp
                                     <span class="badge bg-{{ $statusColors[$device->status] ?? 'info' }}">{{ ucfirst($device->status) }}</span>

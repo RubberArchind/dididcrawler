@@ -24,7 +24,14 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Device Profile</h5>
-                    <span class="badge bg-{{ $device->status === 'active' ? 'success' : ($device->status === 'maintenance' ? 'warning text-dark' : 'secondary') }}">{{ ucfirst($device->status) }}</span>
+                    @php
+                        $statusClasses = [
+                            'active' => 'success',
+                            'idle' => 'warning text-dark',
+                            'dead' => 'danger',
+                        ];
+                    @endphp
+                    <span class="badge bg-{{ $statusClasses[$device->status] ?? 'secondary' }}">{{ ucfirst($device->status) }}</span>
                 </div>
                 <div class="card-body">
                     <dl class="row mb-0">
@@ -92,7 +99,7 @@
                     </div>
                     <div class="alert alert-info mt-3 mb-0">
                         <i class="bi bi-info-circle me-2"></i>
-                        Status updates automatically based on active subscriptions.
+                        Status updates automatically based on the most recent heartbeat.
                     </div>
                     <button type="submit" class="btn btn-primary w-100 mt-3">
                         <i class="bi bi-save"></i> Save Changes

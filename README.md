@@ -7,6 +7,30 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## DididCrawler
+
+This repository builds on Laravel with features tailored for the DididCrawler platform, including device lifecycle management, subscription tracking, and MQTT powered heartbeat monitoring.
+
+### MQTT Heartbeat Listener
+
+Devices publish heartbeat payloads to `$MQTT_TOPIC_PREFIX/<device_uid>/heartbeat`. To ingest those heartbeats and keep the dashboard up to date, run the bundled listener:
+
+```bash
+php artisan mqtt:listen-heartbeats
+```
+
+Configure the broker either through the SuperAdmin settings screen or via environment variables:
+
+| Key | Description | Default |
+| --- | --- | --- |
+| `MQTT_HOST` | Broker host or IP | `127.0.0.1` |
+| `MQTT_PORT` | Broker port | `1883` |
+| `MQTT_USERNAME` / `MQTT_PASSWORD` | Optional credentials | `null` |
+| `MQTT_TOPIC_PREFIX` | Root topic prefix | `devices` |
+| `MQTT_CLIENT_ID` | Client identifier suffix | `dididcrawler-listener` |
+
+Use `--once` to process queued messages and exit—ideal for cron or containerised one-shot workers.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

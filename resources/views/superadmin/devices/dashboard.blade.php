@@ -100,31 +100,46 @@
                     <h5 class="mb-0">Recent Heartbeats</h5>
                     <span class="text-muted small">Last seen updates</span>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead>
+                <div class="card-body p-0" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-hover mb-0">
+                        <thead class="sticky-top bg-white">
+                            <tr>
+                                <th>Device</th>
+                                <th>Status</th>
+                                <th>Reported</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($recentHeartbeats as $heartbeat)
                                 <tr>
-                                    <th>Device</th>
-                                    <th>User</th>
-                                    <th>Last Seen</th>
+                                    <td>
+                                        <div class="fw-semibold">{{ $heartbeat->device?->device_uid ?? 'Unknown' }}</div>
+                                        <small class="text-muted">{{ $heartbeat->device?->user?->name ?? 'Unassigned' }}</small>
+                                    </td>
+                                    <td>
+                                        @php
+                                            $deviceStatus = $heartbeat->device?->status;
+                                            $badgeMap = [
+                                                'active' => 'bg-success-subtle text-success',
+                                                'idle' => 'bg-warning-subtle text-warning',
+                                                'dead' => 'bg-danger-subtle text-danger',
+                                            ];
+                                            $displayStatus = $deviceStatus ?? ($heartbeat->status ? strtolower($heartbeat->status) : null);
+                                            $badgeClass = $badgeMap[$displayStatus] ?? 'bg-secondary-subtle text-secondary';
+                                        @endphp
+                                        <span class="badge {{ $badgeClass }}">
+                                            {{ $displayStatus ? ucfirst($displayStatus) : 'Unknown' }}
+                                        </span>
+                                    </td>
+                                    <td>{{ $heartbeat->reported_at ? $heartbeat->reported_at->diffForHumans() : 'No data' }}</td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($recentActivity as $device)
-                                    <tr>
-                                        <td>{{ $device->device_uid }}</td>
-                                        <td>{{ $device->user?->name ?? 'Unassigned' }}</td>
-                                        <td>{{ $device->last_seen_at ? $device->last_seen_at->diffForHumans() : 'No data' }}</td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="3" class="text-center text-muted py-4">No recent activity available.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+                            @empty
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted py-4">No recent heartbeats available.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
