@@ -31,7 +31,8 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::get('/users/create', [SuperAdminController::class, 'createUser'])->name('users.create');
     Route::get('/reports', [SuperAdminController::class, 'reports'])->name('reports');
     Route::get('/payments', [SuperAdminController::class, 'payments'])->name('payments');
-    Route::post('/payments/{payment}/pay', [SuperAdminController::class, 'markAsPaid'])->name('payments.pay');
+    Route::post('/payments/pay/{user}', [SuperAdminController::class, 'payUserForDate'])->name('payments.pay');
+    Route::post('/payments/{payment}/pay', [SuperAdminController::class, 'markAsPaid'])->name('payments.pay.old');
     Route::get('/settings', [SuperAdminController::class, 'settings'])->name('settings');
     Route::post('/settings', [SuperAdminController::class, 'updateSettings'])->name('settings.update');
     Route::post('/backup', [SuperAdminController::class, 'backup'])->name('backup');

@@ -1,42 +1,8 @@
 @extends('layouts.admin')
 
 @section('title', 'Payment Management')
-@section('page-title', 'Daily Payment Management')
 
-@push('styles')
-<style>
-    .status-pill {
-        --status-percentage: 0;
-        --status-color: currentColor;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.4rem 0.85rem 0.4rem 0.45rem;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.18);
-        border: 1px solid rgba(255, 255, 255, 0.28);
-        backdrop-filter: blur(8px);
-        color: rgba(255, 255, 255, 0.9);
-        box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.5);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .status-pill:hover { transform: translateY(-2px); box-shadow: 0 16px 38px -14px rgba(0, 0, 0, 0.6); }
-    .status-pill__progress {
-        width: 2.6rem; height: 2.6rem; border-radius: 50%; position: relative;
-    }
-    .status-pill__progress::before { content: ""; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(var(--status-color) calc(var(--status-percentage) * 1%), rgba(255, 255, 255, 0.2) 0); filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.15)); }
-    .status-pill__progress::after { content: attr(data-percentage) '%'; position: absolute; inset: 0.4rem; border-radius: 50%; background: #fff; display: grid; place-items: center; font-weight: 700; color: var(--status-color); font-size: 0.85rem; letter-spacing: 0.02em; }
-    .status-pill__value { font-size: 0.9rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25); }
-    .status-pill--success { --status-color: #34d399; }
-    .status-pill--warning { --status-color: #fbbf24; }
-    .status-pill--danger { --status-color: #f87171; }
-    @media (max-width: 768px) {
-        .status-pill { gap: 0.5rem; padding: 0.3rem 0.65rem 0.3rem 0.35rem; }
-        .status-pill__progress { width: 2.2rem; height: 2.2rem; }
-        .status-pill__progress::after { inset: 0.32rem; font-size: 0.75rem; }
-    }
-</style>
-@endpush
+@section('page-title', 'Daily Payment Management')
 
 @section('content')
     <!-- Date Filter -->
@@ -89,7 +55,7 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <h6 class="text-dark-50 mb-2">Total Fees</h6>
-                            <h4 class="mb-0">Rp {{ number_format($stats['total_fee'] ?? 0, 0, ',', '.') }}</h4>
+                            <h4 class="mb-0">Rp {{ number_format($stats['total_fees'], 0, ',', '.') }}</h4>
                         </div>
                         <div class="fs-1 opacity-50">
                             <i class="bi bi-percent"></i>
@@ -159,11 +125,11 @@
                             </div>
                             <div>
                                 <small class="text-muted d-block">Total Fees</small>
-                                <strong class="text-warning">Rp {{ number_format($user->total_fee ?? 0, 0, ',', '.') }}</strong>
+                                <strong class="text-warning">Rp {{ number_format($user->total_fees, 0, ',', '.') }}</strong>
                             </div>
                             <div>
                                 <small class="text-muted d-block">Net Amount</small>
-                                <strong class="text-success">Rp {{ number_format($user->total_net ?? 0, 0, ',', '.') }}</strong>
+                                <strong class="text-success">Rp {{ number_format($user->net_amount, 0, ',', '.') }}</strong>
                             </div>
                         </div>
                     </div>
@@ -171,7 +137,7 @@
             </div>
             <div class="card-body">
                 <!-- Paid Transactions -->
-                @if(($user->paid_group['count'] ?? 0) > 0)
+                @if($user->paid_transactions->count() > 0)
                     <div class="mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h6 class="mb-0">
@@ -179,11 +145,11 @@
                                     <i class="bi bi-check-circle me-1"></i>
                                     Paid Transactions
                                 </span>
-                                <small class="text-muted">({{ $user->paid_group['count'] }}) transactions)</small>
+                                <small class="text-muted">({{ $user->paid_transactions->count() }} transactions)</small>
                             </h6>
                             <div class="text-end">
                                 <small class="text-muted d-block">Paid Net Total</small>
-                                <strong class="text-success">Rp {{ number_format($user->paid_group['net'] ?? 0, 0, ',', '.') }}</strong>
+                                <strong class="text-success">Rp {{ number_format($user->paid_net, 0, ',', '.') }}</strong>
                             </div>
                         </div>
                         <div class="table-responsive">
@@ -199,7 +165,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach(($user->paid_group['transactions'] ?? collect()) as $transaction)
+                                    @foreach($user->paid_transactions as $transaction)
                                         <tr>
                                             <td>{{ $transaction->paid_at->format('H:i:s') }}</td>
                                             <td>
@@ -221,9 +187,9 @@
                                 <tfoot class="table-success">
                                     <tr>
                                         <th colspan="3" class="text-end">Subtotal (Paid):</th>
-                                        <th class="text-end">Rp {{ number_format($user->paid_group['omset'] ?? 0, 0, ',', '.') }}</th>
-                                        <th class="text-end">Rp {{ number_format($user->paid_group['fee'] ?? 0, 0, ',', '.') }}</th>
-                                        <th class="text-end">Rp {{ number_format($user->paid_group['net'] ?? 0, 0, ',', '.') }}</th>
+                                        <th class="text-end">Rp {{ number_format($user->paid_transactions->sum('amount'), 0, ',', '.') }}</th>
+                                        <th class="text-end">Rp {{ number_format($user->paid_transactions->sum('fee_amount'), 0, ',', '.') }}</th>
+                                        <th class="text-end">Rp {{ number_format($user->paid_net, 0, ',', '.') }}</th>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -232,12 +198,7 @@
                 @endif
 
                 <!-- Unpaid Transactions -->
-                @if(($user->unpaid_group['count'] ?? 0) > 0)
-                    <div class="mb-3 text-end">
-                        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#payModal{{ $user->id }}">
-                            <i class="bi bi-credit-card"></i> Pay
-                        </button>
-                    </div>
+                @if($user->unpaid_transactions->count() > 0)
                     <div>
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h6 class="mb-0">
@@ -245,11 +206,11 @@
                                     <i class="bi bi-clock-history me-1"></i>
                                     Unpaid Transactions
                                 </span>
-                                <small class="text-muted">({{ $user->unpaid_group['count'] }}) transactions)</small>
+                                <small class="text-muted">({{ $user->unpaid_transactions->count() }} transactions)</small>
                             </h6>
                             <div class="text-end">
                                 <small class="text-muted d-block">Unpaid Net Total</small>
-                                <strong class="text-danger">Rp {{ number_format($user->unpaid_group['net'] ?? 0, 0, ',', '.') }}</strong>
+                                <strong class="text-danger">Rp {{ number_format($user->unpaid_net, 0, ',', '.') }}</strong>
                             </div>
                         </div>
                         <div class="table-responsive">
@@ -265,7 +226,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach(($user->unpaid_group['transactions'] ?? collect()) as $transaction)
+                                    @foreach($user->unpaid_transactions as $transaction)
                                         <tr>
                                             <td>{{ $transaction->paid_at->format('H:i:s') }}</td>
                                             <td>
@@ -287,52 +248,12 @@
                                 <tfoot class="table-danger">
                                     <tr>
                                         <th colspan="3" class="text-end">Subtotal (Unpaid):</th>
-                                        <th class="text-end">Rp {{ number_format($user->unpaid_group['omset'] ?? 0, 0, ',', '.') }}</th>
-                                        <th class="text-end">Rp {{ number_format($user->unpaid_group['fee'] ?? 0, 0, ',', '.') }}</th>
-                                        <th class="text-end">Rp {{ number_format($user->unpaid_group['net'] ?? 0, 0, ',', '.') }}</th>
+                                        <th class="text-end">Rp {{ number_format($user->unpaid_transactions->sum('amount'), 0, ',', '.') }}</th>
+                                        <th class="text-end">Rp {{ number_format($user->unpaid_transactions->sum('fee_amount'), 0, ',', '.') }}</th>
+                                        <th class="text-end">Rp {{ number_format($user->unpaid_net, 0, ',', '.') }}</th>
                                     </tr>
                                 </tfoot>
                             </table>
-                        </div>
-
-                        <!-- Pay Modal -->
-                        <div class="modal fade" id="payModal{{ $user->id }}" tabindex="-1" aria-labelledby="payModalLabel{{ $user->id }}" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <form method="POST" action="{{ route('superadmin.payments.pay', ['user' => $user->id, 'date' => $date->format('Y-m-d')]) }}">
-                                        @csrf
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="payModalLabel{{ $user->id }}">
-                                                <i class="bi bi-credit-card me-2"></i> Record Payment for {{ $user->name }}
-                                            </h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <div class="mb-3">
-                                                <label for="paid_amount{{ $user->id }}" class="form-label fw-medium">
-                                                    <i class="bi bi-cash me-1 text-success"></i> Amount to Pay
-                                                </label>
-                                                <input type="number" class="form-control" id="paid_amount{{ $user->id }}" name="paid_amount" step="0.01" min="0" max="{{ $user->unpaid_group['net'] ?? 0 }}" value="{{ $user->unpaid_group['net'] ?? 0 }}" required>
-                                                <div class="form-text">Unpaid Net Total: Rp {{ number_format($user->unpaid_group['net'] ?? 0, 0, ',', '.') }}</div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="notes{{ $user->id }}" class="form-label fw-medium">
-                                                    <i class="bi bi-pencil me-1"></i> Payment Notes
-                                                </label>
-                                                <textarea class="form-control" id="notes{{ $user->id }}" name="notes" rows="3" placeholder="Transfer details, reference number, etc..."></textarea>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                                <i class="bi bi-x me-1"></i> Close
-                                            </button>
-                                            <button type="submit" class="btn btn-success">
-                                                <i class="bi bi-check-circle me-1"></i> Record Payment
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 @endif
@@ -346,35 +267,4 @@
             </div>
         </div>
     @endforelse
-
-    <!-- Transaction Summary -->
-    <div class="alert alert-info mt-4">
-        <h6><i class="bi bi-info-circle me-2"></i>Today's Transaction Summary</h6>
-        <div class="row">
-            <div class="col-md-3">
-                <strong>Users with Transactions:</strong> {{ $usersWithTransactions->count() }}
-            </div>
-            <div class="col-md-3">
-                <strong>Total Omset:</strong> Rp {{ number_format($stats['total_omset'] ?? 0, 0, ',', '.') }}
-            </div>
-            <div class="col-md-3">
-                <strong>Total Fees:</strong> Rp {{ number_format($stats['total_fee'] ?? 0, 0, ',', '.') }}
-            </div>
-            <div class="col-md-3">
-                <strong>Net Amount:</strong> Rp {{ number_format($stats['total_net'] ?? 0, 0, ',', '.') }}
-            </div>
-        </div>
-    </div>
 @endsection
-
-@push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Auto-submit form when date changes for better UX
-        const dateInput = document.getElementById('date');
-        if (dateInput) {
-            dateInput.addEventListener('change', function() { this.form.submit(); });
-        }
-    });
-</script>
-@endpush

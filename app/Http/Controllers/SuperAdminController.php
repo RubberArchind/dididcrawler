@@ -10,6 +10,7 @@ use App\Models\Setting;
 use App\Models\Device;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -19,66 +20,55 @@ use Carbon\Carbon;
 class SuperAdminController extends Controller
 {
     /**
-     * SuperAdmin Dashboard
+     * Record payment for a user and date from the modal form
      */
-    public function dashboard()
-    {
-        $stats = [
-            'total_users' => User::where('role', 'user')->count(),
-            'total_transactions' => Transaction::count(),
-            'today_transactions' => Transaction::whereDate('created_at', today())->count(),
-            'today_revenue' => Transaction::success()->whereDate('paid_at', today())->sum('net_amount'),
-            'pending_payments' => Payment::pending()->count(),
-        ];
-
-        $recent_transactions = Transaction::with('user', 'order')
-            ->latest()
-            ->take(10)
-            ->get();
-
-        return view('superadmin.dashboard', compact('stats', 'recent_transactions'));
-    }
-
-    /**
-     * User Management
-     */
-    public function users()
-    {
-        $users = User::where('role', 'user')->paginate(20);
-        return view('superadmin.users.index', compact('users'));
-    }
-
-    public function createUser()
-    {
-        return view('superadmin.users.create');
-    }
-
-    public function storeUser(Request $request)
+    public function payUserForDate(Request $request, $user)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'username' => 'required|string|unique:users|max:255',
-            'email' => 'required|email|unique:users',
-            'address' => 'required|string|max:500',
-            'account_number' => 'required|string|max:50',
-            'phone_number' => 'required|string|max:20',
-            'password' => 'required|string|min:8|confirmed',
+            'paid_amount' => 'required|numeric|min:0',
+            'notes' => 'nullable|string|max:500',
+            'date' => 'required|date',
         ]);
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'username' => $validated['username'],
-            'email' => $validated['email'],
-            'address' => $validated['address'],
-            'account_number' => $validated['account_number'],
-            'phone_number' => $validated['phone_number'],
-            'role' => 'user',
-            'password' => Hash::make($validated['password']),
-            'email_verified_at' => now(),
+        $date = Carbon::parse($validated['date'])->format('Y-m-d');
+        $userModel = User::findOrFail($user);
+
+        // Find or create payment record for this user/date
+        $payment = Payment::firstOrNew([
+            'user_id' => $userModel->id,
+            'payment_date' => $date,
         ]);
 
-        return redirect()->route('superadmin.users')->with('success', 'User created successfully!');
+        // Calculate totals for unpaid transactions
+        $unpaidTransactions = Transaction::where('user_id', $userModel->id)
+            ->where('status', 'success')
+            ->whereDate('paid_at', $date)
+            ->whereNull('paid_at')
+            ->get();
+
+        $totalOmset = $unpaidTransactions->sum('amount');
+        $totalFee = $unpaidTransactions->sum('fee_amount');
+        $netAmount = $unpaidTransactions->sum('net_amount');
+
+        $payment->total_omset = $totalOmset;
+        $payment->total_fee = $totalFee;
+        $payment->net_amount = $netAmount;
+        $payment->paid_amount = $validated['paid_amount'];
+        $payment->notes = $validated['notes'];
+        $payment->status = ($validated['paid_amount'] >= $netAmount) ? 'paid' : 'partial';
+        $payment->paid_at = now();
+        $payment->save();
+
+        // Mark transactions as paid (set paid_at)
+        Transaction::where('user_id', $userModel->id)
+            ->where('status', 'success')
+            ->whereDate('paid_at', $date)
+            ->whereNull('paid_at')
+            ->update(['paid_at' => now()]);
+
+        return back()->with('success', 'Payment recorded successfully!');
     }
+    // Removed duplicate class definition
 
     /**
      * Reports
@@ -147,19 +137,79 @@ class SuperAdminController extends Controller
         $dateInput = $request->get('date');
         $date = $dateInput ? \Carbon\Carbon::parse($dateInput) : today();
         
-        $payments = Payment::with('user')
-            ->where('payment_date', $date->format('Y-m-d'))
-            ->get();
+        // Get last payment cutoff time for the date
+        $lastPayment = Payment::where('payment_date', $date->format('Y-m-d'))
+            ->where('status', 'paid')
+            ->latest('paid_at')
+            ->first();
+        
+        $cutoffTime = $lastPayment ? $lastPayment->paid_at : $date->copy()->startOfDay();
+        
+        // Get users with transactions grouped by paid/unpaid status
+        $usersWithTransactions = User::whereHas('transactions', function($query) use ($date, $cutoffTime) {
+                $query->where('status', 'success')
+                    ->whereDate('paid_at', $date->format('Y-m-d'));
+            })
+            ->with(['transactions' => function($query) use ($date) {
+                $query->where('status', 'success')
+                    ->whereDate('paid_at', $date->format('Y-m-d'))
+                    ->with('device');
+            }])
+            ->get()
+            ->map(function($user) use ($cutoffTime) {
+                $allTransactions = $user->transactions;
+                
+                // Split transactions by payment cutoff
+                $paidTransactions = $allTransactions->filter(function($trx) use ($cutoffTime) {
+                    return $trx->paid_at <= $cutoffTime;
+                });
+                
+                $unpaidTransactions = $allTransactions->filter(function($trx) use ($cutoffTime) {
+                    return $trx->paid_at > $cutoffTime;
+                });
+                
+                // Calculate paid group
+                $paidOmset = $paidTransactions->sum('amount');
+                $paidFee = $paidTransactions->sum('fee_amount');
+                $paidNet = $paidTransactions->sum('net_amount');
+                
+                // Calculate unpaid group
+                $unpaidOmset = $unpaidTransactions->sum('amount');
+                $unpaidFee = $unpaidTransactions->sum('fee_amount');
+                $unpaidNet = $unpaidTransactions->sum('net_amount');
+                
+                $user->paid_group = [
+                    'count' => $paidTransactions->count(),
+                    'omset' => $paidOmset,
+                    'fee' => $paidFee,
+                    'net' => $paidNet,
+                    'transactions' => $paidTransactions,
+                ];
+                
+                $user->unpaid_group = [
+                    'count' => $unpaidTransactions->count(),
+                    'omset' => $unpaidOmset,
+                    'fee' => $unpaidFee,
+                    'net' => $unpaidNet,
+                    'transactions' => $unpaidTransactions,
+                ];
+                
+                $user->total_omset = $paidOmset + $unpaidOmset;
+                $user->total_fee = $paidFee + $unpaidFee;
+                $user->total_net = $paidNet + $unpaidNet;
+                
+                return $user;
+            });
+        
+        $stats = [
+            'total_omset' => $usersWithTransactions->sum('total_omset'),
+            'total_fee' => $usersWithTransactions->sum('total_fee'),
+            'total_net' => $usersWithTransactions->sum('total_net'),
+            'paid_net' => $usersWithTransactions->sum('paid_group.net'),
+            'unpaid_net' => $usersWithTransactions->sum('unpaid_group.net'),
+        ];
 
-        // Create payments for today if they don't exist
-        if ($payments->isEmpty()) {
-            $this->generateDailyPayments($date);
-            $payments = Payment::with('user')
-                ->where('payment_date', $date->format('Y-m-d'))
-                ->get();
-        }
-
-        return view('superadmin.payments', compact('payments', 'date'));
+        return view('superadmin.payments', compact('usersWithTransactions', 'date', 'cutoffTime', 'stats'));
     }
 
     public function markAsPaid(Request $request, Payment $payment)

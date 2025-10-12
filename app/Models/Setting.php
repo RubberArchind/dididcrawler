@@ -78,18 +78,18 @@ class Setting extends Model
     public static function calculateTransactionFee(float $amount): float
     {
         $feePercentage = self::get('fee_percentage', 2.5);
-        $minimumFee = self::get('minimum_fee', 1000);
-        $maximumFee = self::get('maximum_fee', 10000);
+    $minimumFee = self::get('minimum_fee', 0);
+    $maximumFee = self::get('maximum_fee', 0);
 
         // Calculate fee based on percentage
         $calculatedFee = ($amount * $feePercentage) / 100;
 
         // Apply minimum and maximum constraints
-        if ($calculatedFee < $minimumFee) {
+    if ($minimumFee > 0 && $calculatedFee < $minimumFee) {
             return $minimumFee;
         }
         
-        if ($calculatedFee > $maximumFee) {
+    if ($maximumFee > 0 && $calculatedFee > $maximumFee) {
             return $maximumFee;
         }
 

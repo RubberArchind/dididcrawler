@@ -121,30 +121,9 @@ class ListenForMqttTransactions extends Command
                 return;
             }
 
-            // Only process if status is 'paid'
+            // Only process if status is 'sukses'
             if ($status !== 'sukses') {
                 $this->line("Status is '{$status}', skipping (only 'sukses' status is processed)");
-                return;
-            }
-
-            // Find the order
-            $order = Order::where('order_id', $orderId)
-                ->orWhere('external_order_id', $orderId)
-                ->first();
-
-            if (!$order) {
-                $this->error("Order not found: {$orderId}");
-                Log::error('Order not found for transaction', ['order_id' => $orderId]);
-                return;
-            }
-
-            // Check if transaction already exists
-            $existingTransaction = Transaction::where('order_id', $order->id)
-                ->where('status', 'success')
-                ->first();
-
-            if ($existingTransaction) {
-                $this->warn("Transaction already exists for order: {$orderId}");
                 return;
             }
 
@@ -166,8 +145,48 @@ class ListenForMqttTransactions extends Command
                 }
             }
 
+            // Get amount from payload
+            $amount = $payload['amount'] ?? null;
+            
+            if (!$amount) {
+                $this->error("Amount not found in payload");
+                Log::error('Amount missing from transaction payload', ['order_id' => $orderId, 'payload' => $payload]);
+                return;
+            }
+
+            // Check if order already exists and has a successful transaction
+            $existingOrder = Order::where('order_id', $orderId)
+                ->orWhere('external_order_id', $orderId)
+                ->first();
+
+            if ($existingOrder) {
+                // Order exists - check if it already has a successful transaction
+                $existingTransaction = Transaction::where('order_id', $existingOrder->id)
+                    ->where('status', 'success')
+                    ->first();
+
+                if ($existingTransaction) {
+                    $this->warn("Transaction already exists for order: {$orderId}");
+                    return;
+                }
+                
+                $order = $existingOrder;
+                $this->line("Using existing order");
+            } else {
+                // Create new order
+                $order = Order::create([
+                    'user_id' => $device?->user_id ?? 1, // Default to user 1 if no device
+                    'order_id' => $orderId,
+                    'external_order_id' => $orderId,
+                    'amount' => $amount,
+                    'status' => 'pending',
+                    'description' => 'Order from MQTT transaction',
+                ]);
+                
+                $this->line("New order created: {$order->id}");
+            }
+
             // Calculate fee based on settings
-            $amount = $payload['amount'] ?? $order->amount;
             $feeAmount = $this->calculateFee($amount);
             $netAmount = $amount - $feeAmount;
 
