@@ -100,7 +100,7 @@
                                                 {{ ucfirst($transaction->status) }}
                                             </span>
                                         </td>
-                                        <td>{{ $transaction->created_at->format('d/m/Y H:i') }}</td>
+                                        <td>@tz($transaction->created_at, 'd/m/Y H:i')</td>
                                     </tr>
                                 @empty
                                     <tr>
@@ -125,7 +125,7 @@
                 <div class="card-body">
                     @if($today_payment)
                         <div class="mb-3">
-                            <strong>Payment Date:</strong> {{ $today_payment->payment_date->format('d/m/Y') }}
+                            <strong>Payment Date:</strong> @tz($today_payment->payment_date, 'd/m/Y')
                         </div>
                         <div class="mb-3">
                             <strong>Total Omset:</strong><br>

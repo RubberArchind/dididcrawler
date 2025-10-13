@@ -98,7 +98,7 @@
                                                 {{ ucfirst($transaction->status) }}
                                             </span>
                                         </td>
-                                        <td>{{ $transaction->created_at->format('d/m/Y H:i') }}</td>
+                                        <td>{{ \App\Support\Tz::format($transaction->created_at, 'd/m/Y H:i') }}</td>
                                     </tr>
                                 @empty
                                     <tr>
@@ -157,7 +157,7 @@
                     <small class="text-muted">
                         <div>Laravel Version: {{ app()->version() }}</div>
                         <div>PHP Version: {{ phpversion() }}</div>
-                        <div>Server Time: {{ now()->format('d/m/Y H:i:s T') }}</div>
+                        <div>Server Time: {{ \App\Support\Tz::format(now(), 'd/m/Y H:i:s') }} WIB</div>
                     </small>
                 </div>
             </div>

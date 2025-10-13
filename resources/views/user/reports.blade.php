@@ -19,7 +19,7 @@
                     </button>
                 </div>
                 <div class="col-md-7 text-end">
-                    <small class="text-muted">Showing data for: {{ \Carbon\Carbon::parse($date)->format('d F Y') }}</small>
+                    <small class="text-muted">Showing data for: @tz(\Carbon\Carbon::parse($date), 'd F Y')</small>
                 </div>
             </form>
         </div>
@@ -100,9 +100,9 @@
                             <tr>
                                 <td>
                                     <div>
-                                        <strong>{{ $transaction->created_at->format('H:i:s') }}</strong>
+                                        <strong>@tz($transaction->created_at, 'H:i:s')</strong>
                                         <br>
-                                        <small class="text-muted">{{ $transaction->created_at->format('d/m/Y') }}</small>
+                                        <small class="text-muted">@tz($transaction->created_at, 'd/m/Y')</small>
                                     </div>
                                 </td>
                                 <td>
@@ -141,7 +141,7 @@
                                 <td colspan="7" class="text-center py-4">
                                     <div class="text-muted">
                                         <i class="bi bi-file-earmark-text fs-1"></i>
-                                        <p class="mt-2">No transactions found for {{ \Carbon\Carbon::parse($date)->format('d F Y') }}</p>
+                                        <p class="mt-2">No transactions found for @tz(\Carbon\Carbon::parse($date), 'd F Y')</p>
                                     </div>
                                 </td>
                             </tr>

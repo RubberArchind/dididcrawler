@@ -379,7 +379,7 @@
         <div class="page-header d-flex justify-content-between align-items-center">
             <h2 class="h4 fw-bold">@yield('page-title', 'Dashboard')</h2>
             <div class="text-muted">
-                {{ now()->format('l, d F Y') }}
+                @tz(now(), 'l, d F Y')
             </div>
         </div>
 

@@ -56,9 +56,9 @@
                 </div>
                 <div class="col-md-7 text-end">
                     <div class="text-muted">
-                        <div><strong>Showing payments for:</strong> {{ $date->format('d F Y') }}</div>
+                        <div><strong>Showing payments for:</strong> @tz($date, 'd F Y')</div>
                         @if($cutoffTime)
-                            <small>Last payment cutoff: {{ $cutoffTime->format('d/m/Y H:i:s') }}</small>
+                            <small>Last payment cutoff: @tz($cutoffTime, 'd/m/Y H:i:s') WIB</small>
                         @endif
                     </div>
                 </div>
@@ -201,7 +201,7 @@
                                 <tbody>
                                     @foreach(($user->paid_group['transactions'] ?? collect()) as $transaction)
                                         <tr>
-                                            <td>{{ $transaction->paid_at->format('H:i:s') }}</td>
+                                            <td>@tz($transaction->paid_at, 'H:i:s')</td>
                                             <td>
                                                 <code class="small">{{ $transaction->transaction_id }}</code>
                                             </td>
@@ -267,7 +267,7 @@
                                 <tbody>
                                     @foreach(($user->unpaid_group['transactions'] ?? collect()) as $transaction)
                                         <tr>
-                                            <td>{{ $transaction->paid_at->format('H:i:s') }}</td>
+                                            <td>@tz($transaction->paid_at, 'H:i:s')</td>
                                             <td>
                                                 <code class="small">{{ $transaction->transaction_id }}</code>
                                             </td>
@@ -342,7 +342,7 @@
         <div class="card">
             <div class="card-body text-center py-5">
                 <i class="bi bi-inbox fs-1 text-muted"></i>
-                <p class="text-muted mt-3">No transactions found for {{ $date->format('d F Y') }}</p>
+                <p class="text-muted mt-3">No transactions found for @tz($date, 'd F Y')</p>
             </div>
         </div>
     @endforelse

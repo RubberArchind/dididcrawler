@@ -166,7 +166,7 @@
                             <tr>
                                 <td>{{ $subscription->device->device_uid }}</td>
                                 <td>{{ $subscription->subscription_name }}</td>
-                                <td>{{ $subscription->ends_on?->format('d M Y') ?? '—' }}</td>
+                                <td>{{ $subscription->ends_on ? \App\Support\Tz::format($subscription->ends_on, 'd M Y') : '—' }}</td>
                                 <td>
                                     <span class="badge bg-warning text-dark">Expiring</span>
                                 </td>

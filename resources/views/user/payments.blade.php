@@ -19,7 +19,7 @@
                     </button>
                 </div>
                 <div class="col-md-7 text-end">
-                    <small class="text-muted">Showing data for: {{ \Carbon\Carbon::parse($month)->format('F Y') }}</small>
+                    <small class="text-muted">Showing data for: @tz(\Carbon\Carbon::parse($month), 'F Y')</small>
                 </div>
             </form>
         </div>
@@ -96,7 +96,7 @@
                         </tr>
                         <tr>
                             <td><strong>Member Since:</strong></td>
-                            <td>{{ auth()->user()->created_at->format('d F Y') }}</td>
+                            <td>@tz(auth()->user()->created_at, 'd F Y')</td>
                         </tr>
                     </table>
                 </div>
@@ -139,10 +139,10 @@
                         @forelse($payments as $payment)
                             <tr>
                                 <td>
-                                    <strong>{{ $payment->payment_date->format('d/m/Y') }}</strong>
+                                    <strong>@tz($payment->payment_date, 'd/m/Y')</strong>
                                 </td>
                                 <td>
-                                    <small class="text-muted">{{ $payment->payment_date->format('d M Y') }}</small>
+                                    <small class="text-muted">@tz($payment->payment_date, 'd M Y')</small>
                                 </td>
                                 <td>
                                     <strong>Rp {{ number_format($payment->total_omset, 0, ',', '.') }}</strong>
@@ -197,7 +197,7 @@
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h5 class="modal-title">Payment Notes - {{ $payment->payment_date->format('d/m/Y') }}</h5>
+                                            <h5 class="modal-title">Payment Notes - @tz($payment->payment_date, 'd/m/Y')</h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
                                         <div class="modal-body">
@@ -207,8 +207,8 @@
                                                     Rp {{ number_format($payment->paid_amount, 0, ',', '.') }}
                                                 </div>
                                                 <div class="col-6">
-                                                    <strong>Paid At:</strong><br>
-                                                    {{ $payment->paid_at ? $payment->paid_at->format('d/m/Y H:i:s') : '-' }}
+                                                        <strong>Paid At:</strong><br>
+                                                        {{ $payment->paid_at ? \App\Support\Tz::format($payment->paid_at, 'd/m/Y H:i:s') : '-' }}
                                                 </div>
                                             </div>
                                             <div class="mb-3">
@@ -230,7 +230,7 @@
                                 <td colspan="8" class="text-center py-4">
                                     <div class="text-muted">
                                         <i class="bi bi-wallet fs-1"></i>
-                                        <p class="mt-2">No payments found for {{ \Carbon\Carbon::parse($month)->format('F Y') }}</p>
+                                        <p class="mt-2">No payments found for @tz(\Carbon\Carbon::parse($month), 'F Y')</p>
                                         <p class="small">Payments are processed daily based on your successful transactions.</p>
                                     </div>
                                 </td>

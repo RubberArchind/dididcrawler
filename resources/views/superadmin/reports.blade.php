@@ -19,7 +19,7 @@
                     </button>
                 </div>
                 <div class="col-md-7 text-end">
-                    <small class="text-muted">Showing data for: {{ \Carbon\Carbon::parse($date)->format('d F Y') }}</small>
+                    <small class="text-muted">Showing data for: @tz(\Carbon\Carbon::parse($date), 'd F Y')</small>
                 </div>
             </form>
         </div>
@@ -167,7 +167,7 @@
                                 <td colspan="7" class="text-center py-4">
                                     <div class="text-muted">
                                         <i class="bi bi-graph-up fs-1"></i>
-                                        <p class="mt-2">No transactions found for {{ \Carbon\Carbon::parse($date)->format('d F Y') }}</p>
+                                        <p class="mt-2">No transactions found for @tz(\Carbon\Carbon::parse($date), 'd F Y')</p>
                                         <p class="small">Try selecting a different date or check if there were any successful transactions.</p>
                                     </div>
                                 </td>
@@ -186,7 +186,7 @@
                 <div class="row align-items-center">
                     <div class="col-md-6">
                         <h6 class="mb-0">Export Report</h6>
-                        <small class="text-muted">Download the report for {{ \Carbon\Carbon::parse($date)->format('d F Y') }}</small>
+                        <small class="text-muted">Download the report for @tz(\Carbon\Carbon::parse($date), 'd F Y')</small>
                     </div>
                     <div class="col-md-6 text-end">
                         <div class="btn-group">

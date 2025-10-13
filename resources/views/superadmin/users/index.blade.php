@@ -49,7 +49,7 @@
                                         <span class="badge bg-danger">Inactive</span>
                                     @endif
                                 </td>
-                                <td>{{ $user->created_at->format('d/m/Y') }}</td>
+                                <td>@tz($user->created_at, 'd/m/Y')</td>
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
                                         <button type="button" class="btn btn-outline-info" 
@@ -122,12 +122,12 @@
                                             <hr>
                                             <div class="row">
                                                 <div class="col-sm-4"><strong>Registered:</strong></div>
-                                                <div class="col-sm-8">{{ $user->created_at->format('d/m/Y H:i:s') }}</div>
+                                                <div class="col-sm-8">@tz($user->created_at, 'd/m/Y H:i:s') WIB</div>
                                             </div>
                                             <hr>
                                             <div class="row">
                                                 <div class="col-sm-4"><strong>Last Updated:</strong></div>
-                                                <div class="col-sm-8">{{ $user->updated_at->format('d/m/Y H:i:s') }}</div>
+                                                <div class="col-sm-8">@tz($user->updated_at, 'd/m/Y H:i:s') WIB</div>
                                             </div>
                                         </div>
                                         <div class="modal-footer">

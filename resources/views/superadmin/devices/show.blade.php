@@ -65,7 +65,7 @@
                         <dd class="col-sm-8">{{ $device->last_seen_at ? $device->last_seen_at->diffForHumans() : 'No heartbeat yet' }}</dd>
 
                         <dt class="col-sm-4">Created</dt>
-                        <dd class="col-sm-8">{{ $device->created_at->format('d M Y H:i') }}</dd>
+                        <dd class="col-sm-8">@tz($device->created_at, 'd M Y H:i')</dd>
                     </dl>
                 </div>
             </div>
@@ -136,7 +136,7 @@
                                 <td>{{ $subscription->plan ?? '—' }}</td>
                                 <td>
                                     @if($subscription->starts_on || $subscription->ends_on)
-                                        <div>{{ $subscription->starts_on?->format('d M Y') ?? '—' }} &rarr; {{ $subscription->ends_on?->format('d M Y') ?? '∞' }}</div>
+                                        <div>{{ $subscription->starts_on ? \App\Support\Tz::format($subscription->starts_on, 'd M Y') : '—' }} &rarr; {{ $subscription->ends_on ? \App\Support\Tz::format($subscription->ends_on, 'd M Y') : '∞' }}</div>
                                     @else
                                         <span class="text-muted">Open-ended</span>
                                     @endif

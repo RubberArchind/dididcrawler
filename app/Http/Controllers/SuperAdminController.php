@@ -20,6 +20,77 @@ use Carbon\Carbon;
 class SuperAdminController extends Controller
 {
     /**
+     * SuperAdmin Dashboard
+     */
+    public function dashboard(Request $request)
+    {
+        // Basic stats for cards
+        $stats = [
+            'total_users' => User::count(),
+            'total_transactions' => Transaction::success()->count(),
+            'today_transactions' => Transaction::success()->byDate(today())->count(),
+            'today_revenue' => (float) Transaction::success()->byDate(today())->sum('net_amount'),
+            'pending_payments' => Payment::pending()->count(),
+        ];
+
+        // Recent transactions with user relation
+        $recent_transactions = Transaction::with('user')
+            ->latest()
+            ->take(10)
+            ->get();
+
+        return view('superadmin.dashboard', compact('stats', 'recent_transactions'));
+    }
+
+    /**
+     * Users listing
+     */
+    public function users(Request $request)
+    {
+        $users = User::orderByDesc('id')->paginate(15);
+        return view('superadmin.users.index', compact('users'));
+    }
+
+    /**
+     * Show create user form
+     */
+    public function createUser()
+    {
+        return view('superadmin.users.create');
+    }
+
+    /**
+     * Store newly created user
+     */
+    public function storeUser(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users,username',
+            'email' => 'required|email|max:255|unique:users,email',
+            'phone_number' => 'required|string|max:50',
+            'address' => 'required|string|max:1000',
+            'account_number' => 'required|string|max:100',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        User::create([
+            'name' => $validated['name'],
+            'username' => $validated['username'],
+            'email' => $validated['email'],
+            'phone_number' => $validated['phone_number'],
+            'address' => $validated['address'],
+            'account_number' => $validated['account_number'],
+            'role' => 'user',
+            'is_active' => true,
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        return redirect()->route('superadmin.users')
+            ->with('success', 'User created successfully.');
+    }
+
+    /**
      * Record payment for a user and date from the modal form
      */
     public function payUserForDate(Request $request, $user)
