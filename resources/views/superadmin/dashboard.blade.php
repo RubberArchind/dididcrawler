@@ -80,7 +80,7 @@
                         <table class="table table-sm">
                             <thead>
                                 <tr>
-                                    <th>Transaction ID</th>
+                                    <th>Order ID</th>
                                     <th>User</th>
                                     <th>Amount</th>
                                     <th>Status</th>
@@ -90,7 +90,7 @@
                             <tbody>
                                 @forelse($recent_transactions as $transaction)
                                     <tr>
-                                        <td>{{ $transaction->transaction_id }}</td>
+                                        <td>{{ $transaction->order_id }}</td>
                                         <td>{{ $transaction->user->name }}</td>
                                         <td>Rp {{ number_format($transaction->amount, 0, ',', '.') }}</td>
                                         <td>

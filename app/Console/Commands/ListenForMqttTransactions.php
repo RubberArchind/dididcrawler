@@ -5,9 +5,12 @@ namespace App\Console\Commands;
 use App\Models\Order;
 use App\Models\Setting;
 use App\Models\Transaction;
+use App\Mail\NewTransactionNotification;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Cache;
 use MessagePack\MessagePack;
 use PhpMqtt\Client\ConnectionSettings;
 use PhpMqtt\Client\MqttClient;
@@ -60,7 +63,7 @@ class ListenForMqttTransactions extends Command
 
             // Don't set LastWillTopic in connection settings - it might cause ACL issues
             $connectionSettings = (new ConnectionSettings)
-                ->setUseTls(true)
+                ->setUseTls(false)
                 ->setTlsSelfSignedAllowed(true)
                 ->setUsername($username ?: null)
                 ->setPassword($password ?: null)
@@ -161,7 +164,7 @@ class ListenForMqttTransactions extends Command
 
             if ($existingOrder) {
                 // Order exists - check if it already has a successful transaction
-                $existingTransaction = Transaction::where('order_id', $existingOrder->id)
+                $existingTransaction = Transaction::where('order_id', $orderId)
                     ->where('status', 'success')
                     ->first();
 
@@ -193,7 +196,7 @@ class ListenForMqttTransactions extends Command
             // Create the transaction
             $transaction = Transaction::create([
                 'user_id' => $order->user_id,
-                'order_id' => $order->id,
+                'order_id' => $orderId,
                 'device_id' => $device?->id,
                 'transaction_id' => $payload['transaction_id'] ?? 'MQTT-' . $orderId . '-' . time(),
                 'amount' => $amount,
@@ -207,6 +210,9 @@ class ListenForMqttTransactions extends Command
 
             // Update order status to completed
             $order->update(['status' => 'completed']);
+
+            // Send email notification
+            $this->sendEmailNotification($transaction);
 
             $this->info("✓ Transaction created successfully: {$transaction->transaction_id}");
             $this->info("  Order: {$orderId}");
@@ -287,5 +293,65 @@ class ListenForMqttTransactions extends Command
         }
 
         return null;
+    }
+
+    /**
+     * Send email notification with rate limiting and error handling
+     */
+    protected function sendEmailNotification(Transaction $transaction): void
+    {
+        // Load user relationship if not already loaded
+        if (!$transaction->relationLoaded('user')) {
+            $transaction->load('user');
+        }
+
+        // Check if user has email
+        if (!$transaction->user || !$transaction->user->email) {
+            $this->warn("  ⚠️ No email address for user, skipping email notification");
+            Log::warning('Transaction email skipped - no user email', [
+                'transaction_id' => $transaction->id,
+                'user_id' => $transaction->user_id
+            ]);
+            return;
+        }
+
+        // Check rate limiting (same as TransactionObserver)
+        $cacheKey = 'email_rate_limit_' . date('Y-m-d-H');
+        $emailCount = Cache::get($cacheKey, 0);
+        
+        // Limit to 4 emails per hour to stay under hosting limit
+        if ($emailCount >= 4) {
+            $this->warn("  ⚠️ Email rate limit reached ({$emailCount}/4), skipping email notification");
+            Log::warning('Email rate limit reached, skipping transaction email', [
+                'transaction_id' => $transaction->id,
+                'user_email' => $transaction->user->email
+            ]);
+            return;
+        }
+        
+        try {
+            // Load the device relationship for the email
+            $transaction->load('device');
+            
+            Mail::to($transaction->user->email)
+                ->send(new NewTransactionNotification($transaction));
+                
+            // Increment email counter
+            Cache::put($cacheKey, $emailCount + 1, now()->addHour());
+            
+            $this->info("  ✅ Email sent to: {$transaction->user->email}");
+            Log::info('Transaction email sent successfully from MQTT', [
+                'transaction_id' => $transaction->id,
+                'user_email' => $transaction->user->email
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->error("  ❌ Failed to send email: {$e->getMessage()}");
+            Log::error('Failed to send transaction email from MQTT', [
+                'transaction_id' => $transaction->id,
+                'user_email' => $transaction->user->email,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 }

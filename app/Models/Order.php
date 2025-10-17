@@ -43,7 +43,7 @@ class Order extends Model
      */
     public function transactions()
     {
-        return $this->hasMany(Transaction::class);
+        return $this->hasMany(Transaction::class, 'order_id', 'order_id');
     }
 
     /**

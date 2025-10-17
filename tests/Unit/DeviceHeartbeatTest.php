@@ -4,13 +4,14 @@ namespace Tests\Unit;
 
 use App\Models\Device;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class DeviceHeartbeatTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function device_records_heartbeat_and_updates_last_seen(): void
     {
         $device = Device::factory()->create([
@@ -41,7 +42,7 @@ class DeviceHeartbeatTest extends TestCase
         $this->assertSame('active', $device->fresh()->status);
     }
 
-    /** @test */
+    #[Test]
     public function device_status_transitions_based_on_last_seen(): void
     {
         $activeDevice = Device::factory()->create([

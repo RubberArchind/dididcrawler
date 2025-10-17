@@ -44,7 +44,7 @@ class ListenForMqttHeartbeats extends Command
             ->setUsername($username ?: null)
             ->setPassword($password ?: null)
             ->setKeepAliveInterval(config('mqtt.keep_alive', 60))
-            ->setUseTls(true)
+            ->setUseTls(false)
             ->setConnectTimeout(config('mqtt.connection_timeout', 30));
 
         $client = new MqttClient($host, $port, $clientId);

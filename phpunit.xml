@@ -22,8 +22,12 @@
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
+        <env name="DB_CONNECTION" value="mysql"/>
+        <env name="DB_HOST" value="103.6.169.19"/>
+        <env name="DB_PORT" value="3308"/>
+        <env name="DB_DATABASE" value="dididcrawler"/>
+        <env name="DB_USERNAME" value="root"/>
+        <env name="DB_PASSWORD" value="AeMbM5AyZWmAwh66aMlo0M66EPYQW7alylGHNTHiRy8gyhihiT08n1tJaKj1ItPq"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>

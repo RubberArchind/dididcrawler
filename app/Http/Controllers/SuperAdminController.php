@@ -379,7 +379,7 @@ class SuperAdminController extends Controller
                 ['transaction_id' => $transactionId],
                 [
                     'user_id' => $order->user_id,
-                    'order_id' => $order->id,
+                    'order_id' => $orderId,
                     'device_id' => $device?->id,
                     'amount' => $amount,
                     'fee_amount' => $feeAmount,

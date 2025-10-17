@@ -100,7 +100,7 @@ class DummyDataSeeder extends Seeder
                     // Create transaction
                     Transaction::create([
                         'user_id' => $user->id,
-                        'order_id' => $order->id,
+                        'order_id' => $order->order_id,
                         'transaction_id' => 'TXN_' . time() . '_' . $transactionId,
                         'amount' => $order->amount,
                         'fee_amount' => $feeAmount,

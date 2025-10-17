@@ -92,7 +92,7 @@
                                 @forelse($recent_transactions as $transaction)
                                     <tr>
                                         <td><small>{{ $transaction->transaction_id }}</small></td>
-                                        <td>{{ $transaction->order->order_number ?? 'N/A' }}</td>
+                                        <td>{{ $transaction->order_id ?? 'N/A' }}</td>
                                         <td>Rp {{ number_format($transaction->amount, 0, ',', '.') }}</td>
                                         <td>Rp {{ number_format($transaction->net_amount, 0, ',', '.') }}</td>
                                         <td>
