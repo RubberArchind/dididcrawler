@@ -60,17 +60,40 @@ class Transaction extends Model
 
     /**
      * Extract device UID from order_id format: order-{device_uid}-{random}
+     * Device UID is everything between "order-" prefix and the last numeric suffix
+     * 
+     * Examples:
+     * - order-TEST123-608975 => TEST123
+     * - order-giri-satu-76038 => giri-satu
      */
     public static function extractDeviceUidFromOrderId(string $orderId): ?string
     {
-        // Format: order-TEST123-608975
-        $parts = explode('-', $orderId);
-        
-        if (count($parts) >= 3 && $parts[0] === 'order') {
-            return $parts[1]; // Return TEST123
+        // Remove the 'order-' prefix
+        if (!str_starts_with($orderId, 'order-')) {
+            return null;
         }
         
-        return null;
+        $withoutPrefix = substr($orderId, 6); // Remove 'order-'
+        
+        // Find the last dash followed by numeric characters
+        // We need to find where the final random suffix starts
+        $lastDashPos = strrpos($withoutPrefix, '-');
+        
+        if ($lastDashPos === false) {
+            return null; // No dash found
+        }
+        
+        $afterLastDash = substr($withoutPrefix, $lastDashPos + 1);
+        
+        // Check if what comes after the last dash is numeric (the random suffix)
+        if (!ctype_digit($afterLastDash)) {
+            return null; // Last segment is not numeric
+        }
+        
+        // Extract everything before the last dash
+        $deviceUid = substr($withoutPrefix, 0, $lastDashPos);
+        
+        return $deviceUid ?: null;
     }
 
     /**
