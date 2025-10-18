@@ -15,6 +15,11 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dasbor') }}
                     </x-nav-link>
+                    @if (Auth::user() && Auth::user()->role === 'user')
+                        <x-nav-link :href="route('user.devices')" :active="request()->routeIs('user.devices')">
+                            {{ __('Perangkat') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -59,11 +64,17 @@
 
     <!-- Navigasi Bawah Tetap untuk Mobile -->
     <div class="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-        <div class="grid grid-cols-3 text-xs">
+        <div class="grid grid-cols-4 text-xs">
             <a href="{{ route('dashboard') }}" class="flex flex-col items-center justify-center py-2 {{ request()->routeIs('dashboard') ? 'text-indigo-600' : 'text-gray-600' }}">
                 <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0h6"/></svg>
                 <span>Beranda</span>
             </a>
+            @if (Auth::user() && Auth::user()->role === 'user')
+                <a href="{{ route('user.devices') }}" class="flex flex-col items-center justify-center py-2 {{ request()->routeIs('user.devices') ? 'text-indigo-600' : 'text-gray-600' }}">
+                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>Perangkat</span>
+                </a>
+            @endif
             <a href="{{ route('profile.edit') }}" class="flex flex-col items-center justify-center py-2 {{ request()->routeIs('profile.*') ? 'text-indigo-600' : 'text-gray-600' }}">
                 <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 <span>Profil</span>

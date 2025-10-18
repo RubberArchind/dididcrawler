@@ -61,6 +61,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
 // User routes
 Route::middleware(['auth', 'role:user'])->prefix('user')->name('user.')->group(function () {
     Route::get('/dashboard', [UserDashboardController::class, 'dashboard'])->name('dashboard');
+    Route::get('/devices', [UserDashboardController::class, 'devices'])->name('devices');
     Route::get('/reports', [UserDashboardController::class, 'reports'])->name('reports');
     Route::get('/payments', [UserDashboardController::class, 'payments'])->name('payments');
 });

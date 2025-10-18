@@ -336,17 +336,24 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="{{ route('user.devices') }}" 
+                       class="nav-link {{ request()->routeIs('user.devices') ? 'active' : '' }}">
+                        <i class="bi bi-hdd-network"></i>
+                        Perangkat
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{{ route('user.reports') }}" 
                        class="nav-link {{ request()->routeIs('user.reports') ? 'active' : '' }}">
                         <i class="bi bi-graph-up"></i>
-                        Reports
+                        Laporan
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="{{ route('user.payments') }}" 
                        class="nav-link {{ request()->routeIs('user.payments') ? 'active' : '' }}">
                         <i class="bi bi-credit-card"></i>
-                        Payment Status
+                        Status Pembayaran
                     </a>
                 </li>
             @endif
@@ -450,17 +457,17 @@
                         <i class="bi bi-speedometer2 fs-5 d-block"></i>
                         <small>Dashboard</small>
                     </a>
+                    <a href="{{ route('user.devices') }}" class="text-decoration-none {{ request()->routeIs('user.devices') ? 'text-primary' : 'text-muted' }}">
+                        <i class="bi bi-hdd-network fs-5 d-block"></i>
+                        <small>Perangkat</small>
+                    </a>
                     <a href="{{ route('user.reports') }}" class="text-decoration-none {{ request()->routeIs('user.reports') ? 'text-primary' : 'text-muted' }}">
                         <i class="bi bi-graph-up fs-5 d-block"></i>
-                        <small>Reports</small>
+                        <small>Laporan</small>
                     </a>
                     <a href="{{ route('user.payments') }}" class="text-decoration-none {{ request()->routeIs('user.payments') ? 'text-primary' : 'text-muted' }}">
                         <i class="bi bi-credit-card fs-5 d-block"></i>
-                        <small>Payments</small>
-                    </a>
-                    <a href="{{ route('profile.edit') }}" class="text-decoration-none {{ request()->routeIs('profile.*') ? 'text-primary' : 'text-muted' }}">
-                        <i class="bi bi-person fs-5 d-block"></i>
-                        <small>Profile</small>
+                        <small>Pembayaran</small>
                     </a>
                 @endif
             </div>

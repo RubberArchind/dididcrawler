@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Transaction;
 use App\Models\Payment;
 use App\Models\Order;
+use App\Models\Device;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -130,5 +131,20 @@ class UserDashboardController extends Controller
         ];
 
         return view('user.payments', compact('payments', 'monthly_stats', 'month'));
+    }
+
+    /**
+     * User Devices List
+     */
+    public function devices(Request $request)
+    {
+        $user = Auth::user();
+        
+        $devices = Device::where('user_id', $user->id)
+            ->with('subscriptions')
+            ->orderBy('device_uid', 'asc')
+            ->get();
+
+        return view('user.devices', compact('devices'));
     }
 }
