@@ -6,13 +6,88 @@ use App\Models\Device;
 use App\Models\DeviceSubscription;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 
 class DeviceSubscriptionController extends Controller
 {
     public function lookup(): View
     {
-        return view('superadmin.devices.subscriptions.lookup');
+        $devices = Device::select('id', 'device_uid', 'tags')->orderBy('device_uid')->get();
+        return view('superadmin.devices.subscriptions.lookup', compact('devices'));
+    }
+
+    /**
+     * Search devices via API (for live search)
+     */
+    public function searchDevices(Request $request): JsonResponse
+    {
+        $query = $request->get('q', '');
+
+        $devices = Device::where('device_uid', 'like', "%{$query}%")
+            ->select('id', 'device_uid', 'tags')
+            ->limit(20)
+            ->get()
+            ->map(function ($device) {
+                return [
+                    'id' => $device->id,
+                    'device_uid' => $device->device_uid,
+                    'tags' => $device->tags,
+                ];
+            });
+
+        return response()->json($devices);
+    }
+
+    /**
+     * Check device subscription status via API (for ESP)
+     * GET /api/check-subscription/{device_uid}
+     * 
+     * Returns:
+     * - active: true/false (whether device has active subscription)
+     * - subscription: subscription details if active
+     * - message: status message
+     */
+    public function checkSubscription(Request $request, string $device_uid): JsonResponse
+    {
+        $device = Device::where('device_uid', $device_uid)->first();
+
+        if (!$device) {
+            return response()->json([
+                'active' => false,
+                'message' => 'Device not found',
+            ], 404);
+        }
+
+        // Get the active subscription(s) for this device
+        $activeSubscription = $device->subscriptions()
+            ->where('is_active', true)
+            ->where(function ($query) {
+                $query->whereNull('ends_on')
+                    ->orWhere('ends_on', '>=', now()->toDateString());
+            })
+            ->first();
+
+        if ($activeSubscription) {
+            return response()->json([
+                'active' => true,
+                'subscription' => [
+                    'id' => $activeSubscription->id,
+                    'device_id' => $activeSubscription->device_id,
+                    'subscription_name' => $activeSubscription->subscription_name,
+                    'plan' => $activeSubscription->plan,
+                    'starts_on' => $activeSubscription->starts_on,
+                    'ends_on' => $activeSubscription->ends_on,
+                    'notes' => $activeSubscription->notes,
+                ],
+                'message' => 'Device has active subscription',
+            ]);
+        }
+
+        return response()->json([
+            'active' => false,
+            'message' => 'No active subscription found',
+        ]);
     }
 
     public function resolve(Request $request): RedirectResponse

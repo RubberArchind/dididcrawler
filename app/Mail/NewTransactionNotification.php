@@ -30,7 +30,7 @@ class NewTransactionNotification extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'New Transaction Received - DIDID Claw Machine',
+            subject: 'Transaksi Baru Diterima - DIDID Claw Machine',
         );
     }
 

@@ -1,15 +1,15 @@
 @extends('layouts.admin')
 
-@section('title', 'My Reports')
-@section('page-title', 'Transaction Reports')
+@section('title', 'Laporan Saya')
+@section('page-title', 'Laporan Transaksi')
 
 @section('content')
-    <!-- Date Filter -->
+    <!-- Penyaring Tanggal -->
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('user.reports') }}" class="row align-items-end">
                 <div class="col-md-3">
-                    <label for="date" class="form-label">Select Date</label>
+                    <label for="date" class="form-label">Pilih Tanggal</label>
                     <input type="date" class="form-control" id="date" name="date" value="{{ $date }}">
                 </div>
                 <div class="col-md-2">
@@ -19,19 +19,19 @@
                     </button>
                 </div>
                 <div class="col-md-7 text-end">
-                    <small class="text-muted">Showing data for: @tz(\Carbon\Carbon::parse($date), 'd F Y')</small>
+                    <small class="text-muted">Menampilkan data untuk: @tz(\Carbon\Carbon::parse($date), 'd F Y')</small>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Daily Statistics -->
+    <!-- Statistik Harian -->
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="card border-0 bg-primary text-white">
                 <div class="card-body text-center">
                     <h4>{{ $daily_stats['total_transactions'] }}</h4>
-                    <p class="mb-0">Total Transactions</p>
+                    <p class="mb-0">Total Transaksi</p>
                 </div>
             </div>
         </div>
@@ -39,7 +39,7 @@
             <div class="card border-0 bg-success text-white">
                 <div class="card-body text-center">
                     <h4>{{ $daily_stats['successful_transactions'] }}</h4>
-                    <p class="mb-0">Successful</p>
+                    <p class="mb-0">Berhasil</p>
                 </div>
             </div>
         </div>
@@ -47,7 +47,7 @@
             <div class="card border-0 bg-warning text-white">
                 <div class="card-body text-center">
                     <h4>Rp {{ number_format($daily_stats['total_amount'], 0, ',', '.') }}</h4>
-                    <p class="mb-0">Total Revenue</p>
+                    <p class="mb-0">Total Pendapatan</p>
                 </div>
             </div>
         </div>
@@ -55,30 +55,30 @@
             <div class="card border-0 bg-info text-white">
                 <div class="card-body text-center">
                     <h4>Rp {{ number_format($daily_stats['total_fee'], 0, ',', '.') }}</h4>
-                    <p class="mb-0">Total Fees</p>
+                    <p class="mb-0">Total Biaya</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Weekly Trend Chart -->
+    <!-- Grafik Tren Mingguan -->
     <div class="card mb-4">
         <div class="card-header">
-            <h5 class="card-title mb-0">Weekly Transaction Trend</h5>
+            <h5 class="card-title mb-0">Tren Transaksi Mingguan</h5>
         </div>
         <div class="card-body">
-            <div style="height: 350px;"><!-- Increased height container -->
+            <div style="height: 350px;"><!-- Kontainer tinggi yang meningkat -->
                 <canvas id="weeklyChart"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- Transaction Details -->
+    <!-- Detail Transaksi -->
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="card-title mb-0">Transaction Details</h5>
+            <h5 class="card-title mb-0">Detail Transaksi</h5>
             @if($transactions->isNotEmpty())
-                <span class="badge bg-info">{{ $transactions->count() }} transactions</span>
+                <span class="badge bg-info">{{ $transactions->count() }} transaksi</span>
             @endif
         </div>
         <div class="card-body">
@@ -86,12 +86,12 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>Time</th>
-                            <th>Order ID</th>
-                            <th>Type</th>
-                            <th>Amount</th>
-                            <th>Fee</th>
-                            <th>Net</th>
+                            <th>Waktu</th>
+                            <th>ID Pesanan</th>
+                            <th>Tipe</th>
+                            <th>Jumlah</th>
+                            <th>Biaya</th>
+                            <th>Bersih</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -126,11 +126,11 @@
                                 </td>
                                 <td>
                                     @if($transaction->status === 'success')
-                                        <span class="badge bg-success">Success</span>
+                                        <span class="badge bg-success">Berhasil</span>
                                     @elseif($transaction->status === 'pending')
-                                        <span class="badge bg-warning">Pending</span>
+                                        <span class="badge bg-warning">Tertunda</span>
                                     @elseif($transaction->status === 'failed')
-                                        <span class="badge bg-danger">Failed</span>
+                                        <span class="badge bg-danger">Gagal</span>
                                     @else
                                         <span class="badge bg-secondary">{{ ucfirst($transaction->status) }}</span>
                                     @endif
@@ -141,7 +141,7 @@
                                 <td colspan="7" class="text-center py-4">
                                     <div class="text-muted">
                                         <i class="bi bi-file-earmark-text fs-1"></i>
-                                        <p class="mt-2">No transactions found for @tz(\Carbon\Carbon::parse($date), 'd F Y')</p>
+                                        <p class="mt-2">Tidak ada transaksi yang ditemukan untuk @tz(\Carbon\Carbon::parse($date), 'd F Y')</p>
                                     </div>
                                 </td>
                             </tr>
@@ -151,10 +151,10 @@
             </div>
 
             @if($transactions->isNotEmpty())
-                <!-- Pagination if needed -->
+                <!-- Pagination jika diperlukan -->
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <div class="text-muted">
-                        Showing {{ $transactions->count() }} of {{ $transactions->count() }} transactions
+                        Menampilkan {{ $transactions->count() }} dari {{ $transactions->count() }} transaksi
                     </div>
                 </div>
             @endif
@@ -165,22 +165,22 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Auto-submit form when date changes
+    // Submit form otomatis ketika tanggal berubah
     document.getElementById('date').addEventListener('change', function() {
         this.form.submit();
     });
 
-    // Weekly Chart
+    // Grafik Mingguan
     const weeklyData = @json($weekly_data);
     const ctx = document.getElementById('weeklyChart').getContext('2d');
     
     new Chart(ctx, {
         type: 'line',
         data: {
-            labels: weeklyData.map(d => `${d.day} ${d.date}`), // Add day of week to label
+            labels: weeklyData.map(d => `${d.day} ${d.date}`), // Tambahkan hari dari minggu ke label
             datasets: [
                 {
-                    label: 'Total Amount',
+                    label: 'Total Jumlah',
                     data: weeklyData.map(d => d.total_amount),
                     borderColor: 'rgb(75, 192, 192)',
                     backgroundColor: 'rgba(75, 192, 192, 0.1)',
@@ -193,7 +193,7 @@
                     yAxisID: 'y'
                 },
                 {
-                    label: 'Transaction Count',
+                    label: 'Jumlah Transaksi',
                     data: weeklyData.map(d => d.count),
                     borderColor: 'rgb(255, 99, 132)',
                     backgroundColor: 'rgba(255, 99, 132, 0.1)',
@@ -222,7 +222,7 @@
                     },
                     title: {
                         display: true,
-                        text: 'Last 7 Days',
+                        text: '7 Hari Terakhir',
                         color: '#666',
                         font: {
                             weight: 'bold'
@@ -239,7 +239,7 @@
                     },
                     title: {
                         display: true,
-                        text: 'Amount (Rp)',
+                        text: 'Jumlah (Rp)',
                         color: 'rgb(75, 192, 192)',
                         font: {
                             weight: 'bold'
@@ -262,7 +262,7 @@
                     },
                     title: {
                         display: true,
-                        text: 'Transaction Count',
+                        text: 'Jumlah Transaksi',
                         color: 'rgb(255, 99, 132)',
                         font: {
                             weight: 'bold'
@@ -299,7 +299,7 @@
                             if (context.dataset.yAxisID === 'y') {
                                 label += 'Rp ' + context.parsed.y.toLocaleString();
                             } else {
-                                label += context.parsed.y + ' transactions';
+                                label += context.parsed.y + ' transaksi';
                             }
                             return label;
                         }

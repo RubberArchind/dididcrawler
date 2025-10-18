@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>New Payout - DIDID Claw Machine</title>
+    <title>Pembayaran Baru - DIDID Claw Machine</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -101,87 +101,87 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>💰 {{ $payment->isPaid() ? 'Payout Processed!' : 'Payout Scheduled!' }}</h1>
+            <h1>💰 {{ $payment->isPaid() ? 'Pembayaran Diproses!' : 'Pembayaran Dijadwalkan!' }}</h1>
             <div class="status-badge {{ $payment->isPaid() ? 'status-paid' : 'status-pending' }}">
-                {{ strtoupper($payment->status) }}
+                {{ strtoupper($payment->status === 'paid' ? 'DIBAYAR' : ($payment->status === 'partial' ? 'SEBAGIAN' : 'TERTUNDA')) }}
             </div>
         </div>
 
-        <p>Hello <strong>{{ $user->name }}</strong>,</p>
+        <p>Halo <strong>{{ $user->name }}</strong>,</p>
         
         <p>
             @if($payment->isPaid())
-                Your payout has been successfully processed and the payment has been sent to your account.
+                Pembayaran Anda telah berhasil diproses dan dana telah dikirim ke rekening Anda.
             @else
-                A new payout has been scheduled for your account. The payment is currently being processed.
+                Pembayaran baru telah dijadwalkan untuk rekening Anda. Pembayaran sedang diproses.
             @endif
         </p>
 
         <div class="account-info">
-            <strong>Account Details:</strong><br>
-            Account Number: {{ $user->account_number }}<br>
-            Account Name: {{ $user->name }}
+            <strong>Detail Rekening:</strong><br>
+            Nomor Rekening: {{ $user->account_number }}<br>
+            Nama Rekening: {{ $user->name }}
         </div>
 
         <div class="payout-details">
-            <h3 style="margin-top: 0; color: #2c3e50;">Payout Details</h3>
+            <h3 style="margin-top: 0; color: #2c3e50;">Detail Pembayaran</h3>
             
             <div class="detail-row">
-                <span class="detail-label">Payout Period:</span>
+                <span class="detail-label">Periode Pembayaran:</span>
                 <span class="detail-value">{{ $payment->payment_date->format('d M Y') }}</span>
             </div>
             
             <div class="detail-row">
-                <span class="detail-label">Total Revenue:</span>
+                <span class="detail-label">Total Pendapatan:</span>
                 <span class="detail-value">Rp {{ number_format($payment->total_omset, 0, ',', '.') }}</span>
             </div>
             
             <div class="detail-row">
-                <span class="detail-label">Total Fees:</span>
+                <span class="detail-label">Total Biaya:</span>
                 <span class="detail-value">Rp {{ number_format($payment->total_fee, 0, ',', '.') }}</span>
             </div>
             
             <div class="detail-row">
-                <span class="detail-label">Net Amount:</span>
+                <span class="detail-label">Jumlah Bersih:</span>
                 <span class="detail-value">Rp {{ number_format($payment->net_amount, 0, ',', '.') }}</span>
             </div>
             
             <div class="detail-row">
-                <span class="detail-label">Paid Amount:</span>
+                <span class="detail-label">Jumlah yang Dibayar:</span>
                 <span class="detail-value amount">Rp {{ number_format($payment->paid_amount, 0, ',', '.') }}</span>
             </div>
             
             @if($payment->paid_at)
             <div class="detail-row">
-                <span class="detail-label">Payment Date:</span>
-                <span class="detail-value">{{ $payment->paid_at->format('d M Y, H:i:s') }}</span>
+                <span class="detail-label">Tanggal Pembayaran:</span>
+                <span class="detail-value">@tz($payment->paid_at, 'd M Y, H:i:s') WIB</span>
             </div>
             @endif
         </div>
 
         @if($payment->notes)
         <div class="notes">
-            <strong>Notes:</strong><br>
+            <strong>Catatan:</strong><br>
             {{ $payment->notes }}
         </div>
         @endif
 
         @if($payment->isPending())
         <p>
-            <strong>Next Steps:</strong><br>
-            Your payment is being processed and should arrive in your account within 1-3 business days. 
-            You will receive another email confirmation once the payment is completed.
+            <strong>Langkah Selanjutnya:</strong><br>
+            Pembayaran Anda sedang diproses dan seharusnya tiba di rekening Anda dalam 1-3 hari kerja. 
+            Anda akan menerima email konfirmasi lagi setelah pembayaran selesai.
         </p>
         @else
         <p>
-            <strong>Payment Completed:</strong><br>
-            The funds have been transferred to your registered account. Please check your bank statement for confirmation.
+            <strong>Pembayaran Selesai:</strong><br>
+            Dana telah ditransfer ke rekening terdaftar Anda. Silakan periksa laporan bank Anda untuk konfirmasi.
         </p>
         @endif
 
         <div class="footer">
-            <p>Thank you for being part of the DIDID Claw Machine network!</p>
-            <p><small>This is an automated email. Please do not reply to this message.</small></p>
+            <p>Terima kasih telah menjadi bagian dari jaringan DIDID Claw Machine!</p>
+            <p><small>Ini adalah email otomatis. Silakan jangan balas pesan ini.</small></p>
         </div>
     </div>
 </body>

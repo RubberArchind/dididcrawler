@@ -30,7 +30,7 @@ class NewPayoutNotification extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'New Payout Processed - DIDID Claw Machine',
+            subject: 'Pembayaran Baru Diproses - DIDID Claw Machine',
         );
     }
 

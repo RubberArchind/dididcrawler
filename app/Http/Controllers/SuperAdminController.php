@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Setting;
 use App\Models\Device;
+use App\Mail\NewPayoutNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -137,7 +138,23 @@ class SuperAdminController extends Controller
             ->whereNull('paid_at')
             ->update(['paid_at' => now()]);
 
-        return back()->with('success', 'Payment recorded successfully!');
+        // Send email notification to user about the payout
+        try {
+            Mail::to($userModel->email)->send(new NewPayoutNotification($payment));
+            Log::info('Payout notification email sent', [
+                'user_id' => $userModel->id,
+                'payment_id' => $payment->id,
+                'email' => $userModel->email,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send payout notification email', [
+                'user_id' => $userModel->id,
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return back()->with('success', 'Pembayaran berhasil dicatat dan email notifikasi telah dikirim!');
     }
     // Removed duplicate class definition
 
@@ -297,7 +314,23 @@ class SuperAdminController extends Controller
             'notes' => $validated['notes'],
         ]);
 
-        return back()->with('success', 'Payment marked as paid successfully!');
+        // Send email notification to user about the payout
+        try {
+            Mail::to($payment->user->email)->send(new NewPayoutNotification($payment));
+            Log::info('Payout notification email sent', [
+                'user_id' => $payment->user_id,
+                'payment_id' => $payment->id,
+                'email' => $payment->user->email,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send payout notification email', [
+                'user_id' => $payment->user_id,
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return back()->with('success', 'Pembayaran berhasil dicatat dan email notifikasi telah dikirim!');
     }
 
     /**

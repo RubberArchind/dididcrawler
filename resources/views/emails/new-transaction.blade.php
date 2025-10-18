@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>New Transaction - DIDID Claw Machine</title>
+    <title>Transaksi Baru - DIDID Claw Machine</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -89,17 +89,17 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎉 New Transaction Received!</h1>
-            <div class="success-badge">TRANSACTION SUCCESSFUL</div>
+            <h1>🎉 Transaksi Baru Diterima!</h1>
+            <div class="success-badge">TRANSAKSI BERHASIL</div>
         </div>
 
-        <p>Hello <strong>{{ $user->name }}</strong>,</p>
+        <p>Halo <strong>{{ $user->name }}</strong>,</p>
         
-        <p>Great news! You've received a new transaction from your DIDID Claw Machine.</p>
+        <p>Berita bagus! Anda telah menerima transaksi baru dari Mesin Capit DIDID Anda.</p>
 
         @if($device)
         <div class="device-info">
-            <strong>Device:</strong> {{ $device->device_uid ?? 'N/A' }}
+            <strong>Perangkat:</strong> {{ $device->device_uid ?? 'N/A' }}
             @if($device->name)
                 <br><small>{{ $device->name }}</small>
             @endif
@@ -107,51 +107,51 @@
         @endif
 
         <div class="transaction-details">
-            <h3 style="margin-top: 0; color: #2c3e50;">Transaction Details</h3>
+            <h3 style="margin-top: 0; color: #2c3e50;">Detail Transaksi</h3>
             
             <div class="detail-row">
-                <span class="detail-label">Transaction ID:</span>
+                <span class="detail-label">ID Transaksi:</span>
                 <span class="detail-value">{{ $transaction->transaction_id }}</span>
             </div>
             
             <div class="detail-row">
-                <span class="detail-label">Order ID:</span>
+                <span class="detail-label">ID Pesanan:</span>
                 <span class="detail-value">{{ $transaction->order_id }}</span>
             </div>
             
             <div class="detail-row">
-                <span class="detail-label">Payment Method:</span>
+                <span class="detail-label">Metode Pembayaran:</span>
                 <span class="detail-value">{{ ucfirst($transaction->payment_method) }}</span>
             </div>
             
             <div class="detail-row">
-                <span class="detail-label">Date & Time:</span>
-                <span class="detail-value">{{ $transaction->paid_at->format('d M Y, H:i:s') }}</span>
+                <span class="detail-label">Tanggal & Waktu:</span>
+                <span class="detail-value">@tz($transaction->paid_at, 'd M Y, H:i:s') WIB</span>
             </div>
             
             <div class="detail-row">
-                <span class="detail-label">Gross Amount:</span>
+                <span class="detail-label">Jumlah Kotor:</span>
                 <span class="detail-value">Rp {{ number_format($transaction->amount, 0, ',', '.') }}</span>
             </div>
             
             @if($transaction->fee_amount > 0)
             <div class="detail-row">
-                <span class="detail-label">Transaction Fee:</span>
+                <span class="detail-label">Biaya Transaksi:</span>
                 <span class="detail-value">Rp {{ number_format($transaction->fee_amount, 0, ',', '.') }}</span>
             </div>
             @endif
             
             <div class="detail-row">
-                <span class="detail-label">Net Amount:</span>
+                <span class="detail-label">Jumlah Bersih:</span>
                 <span class="detail-value amount">Rp {{ number_format($transaction->net_amount, 0, ',', '.') }}</span>
             </div>
         </div>
 
-        <p>This amount will be included in your next payout calculation.</p>
+        <p>Jumlah ini akan dimasukkan dalam perhitungan pembayaran Anda berikutnya.</p>
 
         <div class="footer">
-            <p>Thank you for using DIDID Claw Machine!</p>
-            <p><small>This is an automated email. Please do not reply to this message.</small></p>
+            <p>Terima kasih telah menggunakan DIDID Claw Machine!</p>
+            <p><small>Ini adalah email otomatis. Silakan jangan balas pesan ini.</small></p>
         </div>
     </div>
 </body>

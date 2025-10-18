@@ -40,8 +40,9 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
 
     Route::prefix('devices')->name('devices.')->group(function () {
         Route::get('/dashboard', [DeviceController::class, 'dashboard'])->name('dashboard');
-    Route::get('/subscriptions/lookup', [DeviceSubscriptionController::class, 'lookup'])->name('subscriptions.lookup');
-    Route::post('/subscriptions/lookup', [DeviceSubscriptionController::class, 'resolve'])->name('subscriptions.lookup.submit');
+        Route::get('/search', [DeviceSubscriptionController::class, 'searchDevices'])->name('search');
+        Route::get('/subscriptions/lookup', [DeviceSubscriptionController::class, 'lookup'])->name('subscriptions.lookup');
+        Route::post('/subscriptions/lookup', [DeviceSubscriptionController::class, 'resolve'])->name('subscriptions.lookup.submit');
         Route::get('/', [DeviceController::class, 'index'])->name('index');
         Route::get('/create', [DeviceController::class, 'create'])->name('create');
         Route::post('/', [DeviceController::class, 'store'])->name('store');
@@ -66,6 +67,9 @@ Route::middleware(['auth', 'role:user'])->prefix('user')->name('user.')->group(f
 
 // Webhook routes (no authentication required)
 Route::post('/webhook/payment', [SuperAdminController::class, 'webhook'])->name('webhook.payment');
+
+// API routes (no authentication required - for ESP devices)
+Route::get('/api/check-subscription/{device_uid}', [DeviceSubscriptionController::class, 'checkSubscription'])->name('api.check-subscription');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
