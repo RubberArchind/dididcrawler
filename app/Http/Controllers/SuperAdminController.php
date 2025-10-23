@@ -71,6 +71,7 @@ class SuperAdminController extends Controller
             'email' => 'required|email|max:255|unique:users,email',
             'phone_number' => 'required|string|max:50',
             'address' => 'required|string|max:1000',
+            'bank_name' => 'required|string|max:100',
             'account_number' => 'required|string|max:100',
             'password' => 'required|string|min:8|confirmed',
         ]);
@@ -81,6 +82,7 @@ class SuperAdminController extends Controller
             'email' => $validated['email'],
             'phone_number' => $validated['phone_number'],
             'address' => $validated['address'],
+            'bank_name' => $validated['bank_name'],
             'account_number' => $validated['account_number'],
             'role' => 'user',
             'is_active' => true,

@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('username')->unique();
             $table->string('email')->unique();
             $table->string('address')->nullable();
+            $table->string('bank_name')->nullable(); // nama bank
             $table->string('account_number')->nullable(); // norek
             $table->string('phone_number')->nullable(); // no hape
             $table->enum('role', ['user', 'superadmin'])->default('user');

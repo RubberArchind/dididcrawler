@@ -64,14 +64,26 @@
                             @enderror
                         </div>
 
-                        <div class="mb-3">
-                            <label for="account_number" class="form-label">Bank Account Number</label>
-                            <input type="text" class="form-control @error('account_number') is-invalid @enderror" 
-                                   id="account_number" name="account_number" value="{{ old('account_number') }}" 
-                                   placeholder="1234567890" required>
-                            @error('account_number')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="bank_name" class="form-label">Bank Name</label>
+                                <input type="text" class="form-control @error('bank_name') is-invalid @enderror" 
+                                       id="bank_name" name="bank_name" value="{{ old('bank_name') }}" 
+                                       placeholder="BCA, Mandiri, BNI, etc." required>
+                                @error('bank_name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="account_number" class="form-label">Bank Account Number</label>
+                                <input type="text" class="form-control @error('account_number') is-invalid @enderror" 
+                                       id="account_number" name="account_number" value="{{ old('account_number') }}" 
+                                       placeholder="1234567890" required>
+                                @error('account_number')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
                         </div>
 
                         <div class="row">
