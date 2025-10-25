@@ -142,7 +142,7 @@ class SuperAdminController extends Controller
 
         // Send email notification to user about the payout
         try {
-            Mail::to($userModel->email)->send(new NewPayoutNotification($payment));
+            Mail::to($userModel->email)->queue(new NewPayoutNotification($payment));
             Log::info('Payout notification email sent', [
                 'user_id' => $userModel->id,
                 'payment_id' => $payment->id,

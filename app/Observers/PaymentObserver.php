@@ -15,10 +15,7 @@ class PaymentObserver
      */
     public function created(Payment $payment): void
     {
-        // Send email notification when payment is created
-        if ($payment->user && $payment->user->email) {
-            $this->sendEmailSafely($payment);
-        }
+        // Email is handled in the controller
     }
 
     /**
@@ -26,23 +23,7 @@ class PaymentObserver
      */
     public function updated(Payment $payment): void
     {
-        // Send email notification when payment status changes to paid
-        if ($payment->wasChanged('status') && 
-            $payment->isPaid() && 
-            $payment->user && 
-            $payment->user->email) {
-            
-            $this->sendEmailSafely($payment);
-        }
-        
-        // Also send notification when paid_at is set for the first time
-        if ($payment->wasChanged('paid_at') && 
-            $payment->paid_at && 
-            $payment->user && 
-            $payment->user->email) {
-            
-            $this->sendEmailSafely($payment);
-        }
+        // Email is handled in the controller
     }
 
     /**
@@ -50,37 +31,7 @@ class PaymentObserver
      */
     private function sendEmailSafely(Payment $payment): void
     {
-        $cacheKey = 'email_rate_limit_' . date('Y-m-d-H');
-        $emailCount = Cache::get($cacheKey, 0);
-        
-        // Limit to 4 emails per hour to stay under hosting limit
-        if ($emailCount >= 4) {
-            Log::warning('Email rate limit reached, skipping payout email', [
-                'payment_id' => $payment->id,
-                'user_email' => $payment->user->email
-            ]);
-            return;
-        }
-        
-        try {
-            Mail::to($payment->user->email)
-                ->send(new NewPayoutNotification($payment));
-                
-            // Increment email counter
-            Cache::put($cacheKey, $emailCount + 1, now()->addHour());
-            
-            Log::info('Payout email sent successfully', [
-                'payment_id' => $payment->id,
-                'user_email' => $payment->user->email
-            ]);
-            
-        } catch (\Exception $e) {
-            Log::error('Failed to send payout email', [
-                'payment_id' => $payment->id,
-                'user_email' => $payment->user->email,
-                'error' => $e->getMessage()
-            ]);
-        }
+        // Deprecated - email is now handled in the controller
     }
 
     /**
