@@ -147,7 +147,7 @@
                                 <i class="bi bi-telephone ms-3 me-2"></i>{{ $user->phone_number }}
                             @endif
                             @if($user->account_number)
-                                <i class="bi bi-bank ms-3 me-2"></i>{{ $user->account_number }}
+                                <i class="bi bi-bank ms-3 me-2"></i>{{ $user->bank_name }} - {{ $user->account_number }}
                             @endif
                         </div>
                     </div>
